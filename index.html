@@ -4,14 +4,35 @@
   <meta charset="UTF-8">
   <style>
     body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      background: #ff9966;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 15px 30px;
+      display: block;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    nav a:hover {
+      background: #ffcc33;
+      color: black;
+    }
+
+    main {
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #f0f0f0;
-      margin: 0;
+      padding: 60px 0;
     }
 
     .tool-button {
@@ -29,18 +50,30 @@
     .tool-button:hover {
       transform: scale(1.05);
     }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: #ff9966;
+      color: white;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Buttons leading to your tools -->
-  <button class="tool-button" onclick="location.href='passgen.html'">
-    Password Generator
-  </button>
+<nav>
+  <a href="index.html">Home</a>
+  <a href="passgen.html">Password Generator</a>
+  <a href="about.html">About</a>
+</nav>
 
-  <button class="tool-button" onclick="location.href='another-tool.html'">
-    Another Tool
-  </button>
+<main>
+  <button class="tool-button" onclick="location.href='passgen.html'">Password Generator</button>
+  <!-- Add more tools here -->
+</main>
+
+<footer></footer>
 
 </body>
 </html>
