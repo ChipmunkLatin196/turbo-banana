@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Turbo Banana Tools</title>
+  <meta charset="UTF-8">
   <style>
     body {
       display: flex;
@@ -11,13 +11,14 @@
       height: 100vh;
       font-family: Arial, sans-serif;
       background: #f0f0f0;
+      margin: 0;
     }
 
     .tool-button {
-      width: 200px;
+      width: 250px;
       height: 60px;
       margin: 20px;
-      font-size: 24px;
+      font-size: 20px;
       border: none;
       border-radius: 12px;
       cursor: pointer;
@@ -26,15 +27,20 @@
     }
 
     .tool-button:hover {
-      transform: scale(1.1);
+      transform: scale(1.05);
     }
   </style>
 </head>
 <body>
 
-  <!-- Buttons leading to tools -->
-  <button class="tool-button" onclick="location.href='passgen.html'">🔑</button>
-  <button class="tool-button" onclick="location.href='another-tool.html'">🛠️</button>
+  <!-- Buttons leading to your tools -->
+  <button class="tool-button" onclick="location.href='passgen.html'">
+    Password Generator
+  </button>
+
+  <button class="tool-button" onclick="location.href='another-tool.html'">
+    Another Tool
+  </button>
 
 </body>
 </html>
