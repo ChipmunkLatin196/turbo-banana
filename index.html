@@ -2,71 +2,9 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background-color: #f5f5e6; /* light cream-grey */
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      align-items: center;
-    }
-
-    nav {
-      display: flex;
-      justify-content: center;
-      padding: 20px 0;
-      width: 100%;
-    }
-
-    nav a {
-      color: #333;
-      text-decoration: none;
-      margin: 0 20px;
-      font-size: 18px;
-      transition: color 0.3s ease;
-    }
-
-    nav a:hover {
-      color: #000;
-      text-decoration: underline;
-    }
-
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .tool-button {
-      background: #333;
-      border: none;
-      font-size: 18px;
-      color: #fff;
-      cursor: pointer;
-      margin: 10px 5px;
-      padding: 12px 24px;
-      border-radius: 6px;
-      transition: background 0.3s ease, transform 0.2s ease;
-    }
-
-    .tool-button:hover {
-      background: #000;
-      transform: translateY(-2px);
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-      color: #999;
-      width: 100%;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <nav>
@@ -75,8 +13,9 @@
 </nav>
 
 <main>
-  <!-- Removed the middle "Generate Password" text -->
-  <button class="tool-button" onclick="location.href='passgen.html'">Open Password Generator</button>
+  <button class="tool-button" onclick="location.href='passgen.html'">
+    Open Password Generator
+  </button>
 </main>
 
 <footer></footer>
