@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Password Generator</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+    }
+
+    h1 {
+      margin-bottom: 40px;
+      font-size: 36px;
+    }
+
+    #pw {
+      font-size: 24px;
+      padding: 10px 20px;
+      margin: 20px 0;
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 12px;
+      word-break: break-all;
+      text-align: center;
+      min-width: 300px;
+    }
+
+    .button {
+      font-size: 20px;
+      padding: 12px 24px;
+      margin: 10px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      background-color: #ffcc33;
+      transition: transform 0.2s;
+    }
+
+    .button:hover {
+      transform: scale(1.1);
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    #length {
+      margin-left: 10px;
+    }
+
+    .back-button {
+      margin-top: 40px;
+      background-color: #ff9966;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔑</h1>
+
+  <!-- Password display -->
+  <div id="pw">Click generate!</div>
+
+  <!-- Controls -->
+  <div class="slider-container">
+    <label for="length">Length:</label>
+    <input type="range" id="length" min="4" max="64" value="16">
+    <span id="lenDisplay">16</span>
+  </div>
+
+  <div>
+    <button class="button" onclick="generate()">Generate</button>
+    <button class="button" onclick="copyPassword()">Copy</button>
+  </div>
+
+  <button class="button back-button" onclick="location.href='index.html'">🏠</button>
+
+  <script>
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+
+    const lengthSlider = document.getElementById("length");
+    const lengthLabel = document.getElementById("lenDisplay");
+
+    lengthSlider.oninput = () => {
+      lengthLabel.textContent = lengthSlider.value;
+    };
+
+    function generate() {
+      const length = parseInt(lengthSlider.value);
+      let pw = "";
+      for (let i = 0; i < length; i++) {
+        pw += chars[Math.floor(Math.random() * chars.length)];
+      }
+      document.getElementById("pw").innerText = pw;
+    }
+
+    function copyPassword() {
+      const pw = document.getElementById("pw").innerText;
+      if (!pw || pw === "Click generate!") {
+        alert("Generate a password first!");
+        return;
+      }
+      navigator.clipboard.writeText(pw).then(() => {
+        alert("Password copied!");
+      });
+    }
+  </script>
+
+</body>
+</html>
