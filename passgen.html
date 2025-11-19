@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Password Generator</title>
+  <meta charset="UTF-8">
   <style>
     body {
       display: flex;
@@ -11,11 +11,7 @@
       height: 100vh;
       font-family: Arial, sans-serif;
       background: #f0f0f0;
-    }
-
-    h1 {
-      margin-bottom: 40px;
-      font-size: 36px;
+      margin: 0;
     }
 
     #pw {
@@ -25,7 +21,6 @@
       background: #fff;
       border: 2px solid #ccc;
       border-radius: 12px;
-      word-break: break-all;
       text-align: center;
       min-width: 300px;
     }
@@ -41,34 +36,18 @@
       transition: transform 0.2s;
     }
 
-    .button:hover {
-      transform: scale(1.1);
-    }
+    .button:hover { transform: scale(1.05); }
 
-    .slider-container {
-      display: flex;
-      align-items: center;
-      margin-top: 20px;
-    }
+    .back-button { background-color: #ff9966; margin-top: 40px; }
 
-    #length {
-      margin-left: 10px;
-    }
-
-    .back-button {
-      margin-top: 40px;
-      background-color: #ff9966;
-    }
+    .slider-container { display: flex; align-items: center; margin-top: 20px; }
+    #length { margin-left: 10px; }
   </style>
 </head>
 <body>
 
-  <h1>🔑</h1>
-
-  <!-- Password display -->
   <div id="pw">Click generate!</div>
 
-  <!-- Controls -->
   <div class="slider-container">
     <label for="length">Length:</label>
     <input type="range" id="length" min="4" max="64" value="16">
@@ -80,18 +59,14 @@
     <button class="button" onclick="copyPassword()">Copy</button>
   </div>
 
-  <button class="button back-button" onclick="location.href='index.html'">🏠</button>
+  <button class="button back-button" onclick="location.href='index.html'">Back</button>
 
   <script>
-    const chars =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
-
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
     const lengthSlider = document.getElementById("length");
     const lengthLabel = document.getElementById("lenDisplay");
 
-    lengthSlider.oninput = () => {
-      lengthLabel.textContent = lengthSlider.value;
-    };
+    lengthSlider.oninput = () => { lengthLabel.textContent = lengthSlider.value; }
 
     function generate() {
       const length = parseInt(lengthSlider.value);
@@ -104,13 +79,8 @@
 
     function copyPassword() {
       const pw = document.getElementById("pw").innerText;
-      if (!pw || pw === "Click generate!") {
-        alert("Generate a password first!");
-        return;
-      }
-      navigator.clipboard.writeText(pw).then(() => {
-        alert("Password copied!");
-      });
+      if (!pw || pw === "Click generate!") { alert("Generate a password first!"); return; }
+      navigator.clipboard.writeText(pw).then(() => { alert("Password copied!"); });
     }
   </script>
 
