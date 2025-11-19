@@ -2,139 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background-color: #f5f5e6; /* light cream-grey */
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      align-items: center;
-    }
-
-    nav {
-      display: flex;
-      justify-content: center;
-      padding: 20px 0;
-      width: 100%;
-    }
-
-    nav a {
-      color: #333;
-      text-decoration: none;
-      margin: 0 20px;
-      font-size: 18px;
-      transition: color 0.3s ease;
-    }
-
-    nav a:hover {
-      color: #000;
-      text-decoration: underline;
-    }
-
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #pw {
-      font-size: 22px;
-      padding: 15px 20px;
-      margin: 20px 0;
-      text-align: center;
-      min-width: 300px;
-      color: #333;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      display: none; /* hidden until generated */
-    }
-
-    .button {
-      background: #333;
-      border: none;
-      font-size: 18px;
-      color: #fff;
-      cursor: pointer;
-      margin: 10px 5px;
-      padding: 10px 20px;
-      border-radius: 6px;
-      transition: background 0.3s ease, transform 0.2s ease;
-    }
-
-    .button:hover {
-      background: #000;
-      transform: translateY(-2px);
-    }
-
-    .slider-container {
-      display: flex;
-      align-items: center;
-      margin: 20px 0;
-      font-size: 16px;
-      color: #333;
-      gap: 12px;
-    }
-
-    /* Modern slider styling */
-    #length {
-      -webkit-appearance: none;
-      width: 200px;
-      height: 6px;
-      border-radius: 3px;
-      background: linear-gradient(90deg, #333 0%, #999 100%);
-      outline: none;
-      transition: background 0.3s ease;
-    }
-
-    #length:hover {
-      background: linear-gradient(90deg, #000 0%, #666 100%);
-    }
-
-    #length::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #fff;
-      border: 2px solid #333;
-      cursor: pointer;
-      transition: transform 0.2s ease, background 0.3s ease;
-    }
-
-    #length::-webkit-slider-thumb:hover {
-      background: #333;
-      transform: scale(1.2);
-    }
-
-    #length::-moz-range-thumb {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: #fff;
-      border: 2px solid #333;
-      cursor: pointer;
-      transition: transform 0.2s ease, background 0.3s ease;
-    }
-
-    #length::-moz-range-thumb:hover {
-      background: #333;
-      transform: scale(1.2);
-    }
-
-    footer {
-      text-align: center;
-      padding: 20px;
-      font-size: 14px;
-      color: #999;
-      width: 100%;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -144,14 +12,17 @@
 </nav>
 
 <main>
-  <div id="pw"></div> <!-- hidden until password is generated -->
+  <!-- Password display box (hidden until generated) -->
+  <div id="pw"></div>
 
+  <!-- Slider -->
   <div class="slider-container">
     <label for="length">Length:</label>
     <input type="range" id="length" min="4" max="64" value="16">
     <span id="lenDisplay">16</span>
   </div>
 
+  <!-- Buttons -->
   <div>
     <button class="button" onclick="generate()">Generate</button>
     <button class="button" onclick="copyPassword()">Copy</button>
@@ -166,25 +37,33 @@
   const lengthLabel = document.getElementById("lenDisplay");
   const pwBox = document.getElementById("pw");
 
-  lengthSlider.oninput = () => { lengthLabel.textContent = lengthSlider.value; }
+  // Update number label when sliding
+  lengthSlider.oninput = () => {
+    lengthLabel.textContent = lengthSlider.value;
+  };
 
+  // Generate password
   function generate() {
     const length = parseInt(lengthSlider.value);
     let pw = "";
     for (let i = 0; i < length; i++) {
       pw += chars[Math.floor(Math.random() * chars.length)];
     }
-    pwBox.style.display = "block"; // show box only when generated
+
+    pwBox.style.display = "block";  // show password box
     pwBox.innerText = pw;
   }
 
+  // Copy to clipboard
   function copyPassword() {
     const pw = pwBox.innerText;
     if (!pw) {
       alert("Generate a password first!");
       return;
     }
-    navigator.clipboard.writeText(pw).then(() => { alert("Password copied!"); });
+    navigator.clipboard.writeText(pw).then(() => {
+      alert("Password copied!");
+    });
   }
 </script>
 
