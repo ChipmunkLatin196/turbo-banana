@@ -4,85 +4,80 @@
   <meta charset="UTF-8">
   <style>
     body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5e6; /* light cream-grey */
+      margin: 0;
       display: flex;
       flex-direction: column;
+      min-height: 100vh;
+    }
+
+    nav {
+      display: flex;
       justify-content: center;
+      background: transparent; /* no color */
+      padding: 20px 0;
+    }
+
+    nav a {
+      color: #333;
+      text-decoration: none;
+      margin: 0 20px;
+      font-size: 18px;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: #000;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #f0f0f0;
-      margin: 0;
+      justify-content: center;
     }
 
-    #pw {
-      font-size: 24px;
-      padding: 10px 20px;
-      margin: 20px 0;
-      background: #fff;
-      border: 2px solid #ccc;
-      border-radius: 12px;
-      text-align: center;
-      min-width: 300px;
-    }
-
-    .button {
-      font-size: 20px;
-      padding: 12px 24px;
-      margin: 10px;
+    .tool-button {
+      background: none;
       border: none;
-      border-radius: 12px;
+      font-size: 22px;
+      color: #333;
       cursor: pointer;
-      background-color: #ffcc33;
-      transition: transform 0.2s;
+      margin: 15px 0;
+      padding: 5px 0;
+      transition: color 0.2s;
     }
 
-    .button:hover { transform: scale(1.05); }
+    .tool-button:hover {
+      color: #000;
+      text-decoration: underline;
+    }
 
-    .back-button { background-color: #ff9966; margin-top: 40px; }
-
-    .slider-container { display: flex; align-items: center; margin-top: 20px; }
-    #length { margin-left: 10px; }
+    footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #999;
+    }
   </style>
 </head>
 <body>
 
-  <div id="pw">Click generate!</div>
+<nav>
+  <a href="index.html">Home</a>
+  <a href="passgen.html">Password Generator</a>
+  <a href="blog.html">Blog</a>
+  <a href="about.html">About</a>
+</nav>
 
-  <div class="slider-container">
-    <label for="length">Length:</label>
-    <input type="range" id="length" min="4" max="64" value="16">
-    <span id="lenDisplay">16</span>
-  </div>
+<main>
+  <button class="tool-button" onclick="location.href='passgen.html'">Password Generator</button>
+  <button class="tool-button" onclick="location.href='blog.html'">Blog</button>
+</main>
 
-  <div>
-    <button class="button" onclick="generate()">Generate</button>
-    <button class="button" onclick="copyPassword()">Copy</button>
-  </div>
-
-  <button class="button back-button" onclick="location.href='index.html'">Back</button>
-
-  <script>
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
-    const lengthSlider = document.getElementById("length");
-    const lengthLabel = document.getElementById("lenDisplay");
-
-    lengthSlider.oninput = () => { lengthLabel.textContent = lengthSlider.value; }
-
-    function generate() {
-      const length = parseInt(lengthSlider.value);
-      let pw = "";
-      for (let i = 0; i < length; i++) {
-        pw += chars[Math.floor(Math.random() * chars.length)];
-      }
-      document.getElementById("pw").innerText = pw;
-    }
-
-    function copyPassword() {
-      const pw = document.getElementById("pw").innerText;
-      if (!pw || pw === "Click generate!") { alert("Generate a password first!"); return; }
-      navigator.clipboard.writeText(pw).then(() => { alert("Password copied!"); });
-    }
-  </script>
+<footer></footer>
 
 </body>
 </html>
