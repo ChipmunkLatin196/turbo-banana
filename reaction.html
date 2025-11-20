@@ -85,23 +85,20 @@
   </style>
 </head>
 <body>
-
-<nav>
-  <a href="index.html">Home</a>
-  <a href="passgen.html">Password Generator</a>
-  <a href="reaction.html">Reaction Test</a>
-</nav>
-
-<main>
-  <div id="test-area">Click anywhere to begin</div>
-  <div id="results"></div>
-  <div id="history">
-    <strong>Last 10 results:</strong>
-    <ul id="history-list"></ul>
-  </div>
-</main>
-
-<script>
+  <nav>
+    <a href="index.html">Home</a> <a href="passgen.html">Password Generator</a> <a href="reaction.html">Reaction Test</a>
+  </nav>
+  <main>
+    <div id="test-area">
+      Click anywhere to begin
+    </div>
+    <div id="results"></div>
+    <div id="history">
+      <strong>Last 10 results:</strong>
+      <ul id="history-list"></ul>
+    </div>
+  </main>
+  <script>
   let startTime, timeoutId, waiting = false;
   const testArea = document.getElementById("test-area");
   const results = document.getElementById("results");
@@ -151,7 +148,6 @@
     // First click
     startRound();
   };
-</script>
-
+  </script>
 </body>
 </html>
