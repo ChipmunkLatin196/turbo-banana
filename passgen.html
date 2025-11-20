@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="styles.css">
-  <title></title>
+  <title>Password Generator</title>
 </head>
 <body>
   <nav>
@@ -19,40 +20,38 @@
     </div>
   </main>
   <script>
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
-  const lengthSlider = document.getElementById("length");
-  const lengthLabel = document.getElementById("lenDisplay");
-  const pwBox = document.getElementById("pw");
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
+    const lengthSlider = document.getElementById("length");
+    const lengthLabel = document.getElementById("lenDisplay");
+    const pwBox = document.getElementById("pw");
 
-  // Update number label when sliding
-  lengthSlider.oninput = () => {
-    lengthLabel.textContent = lengthSlider.value;
-  };
+    // Update number label when sliding
+    lengthSlider.oninput = () => {
+      lengthLabel.textContent = lengthSlider.value;
+    };
 
-  // Generate password
-  function generate() {
-    const length = parseInt(lengthSlider.value);
-    let pw = "";
-    for (let i = 0; i < length; i++) {
-      pw += chars[Math.floor(Math.random() * chars.length)];
+    // Generate password
+    function generate() {
+      const length = parseInt(lengthSlider.value);
+      let pw = "";
+      for (let i = 0; i < length; i++) {
+        pw += chars[Math.floor(Math.random() * chars.length)];
+      }
+      pwBox.style.display = "block";
+      pwBox.innerText = pw;
     }
 
-    pwBox.style.display = "block";  // show password box
-    pwBox.innerText = pw;
-  }
-
-  // Copy to clipboard
-  function copyPassword() {
-    const pw = pwBox.innerText;
-    if (!pw) {
-      alert("Generate a password first!");
-      return;
+    // Copy to clipboard
+    function copyPassword() {
+      const pw = pwBox.innerText;
+      if (!pw) {
+        alert("Generate a password first!");
+        return;
+      }
+      navigator.clipboard.writeText(pw).then(() => {
+        alert("Password copied!");
+      });
     }
-    navigator.clipboard.writeText(pw).then(() => {
-      alert("Password copied!");
-    });
-  }
   </script>
 </body>
 </html>
-
