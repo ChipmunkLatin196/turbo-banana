@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aim Test</title>
   <link rel="stylesheet" href="styles.css">
   <style>
@@ -40,16 +41,18 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 10px;
     }
 
     #game-area {
       position: relative;
       width: 90vw;
-      height: 70vh;
-      background: #f5f5e6;   /* match site background */
-      border: 4px solid #333; /* keep border */
+      height: 60vh;
+      background: #f5f5e6;
+      border: 4px solid #333;
       border-radius: 8px;
       overflow: hidden;
+      max-width: 600px;
     }
 
     .target {
@@ -63,8 +66,9 @@
 
     #results {
       margin-top: 20px;
-      font-size: 20px;
+      font-size: 18px;
       color: #333;
+      text-align: center;
     }
 
     #start-btn {
@@ -77,10 +81,29 @@
       color: #fff;
       cursor: pointer;
       transition: background 0.3s ease;
+      width: 100%;
+      max-width: 300px;
     }
 
     #start-btn:hover {
       background: #000;
+    }
+
+    @media (max-width: 600px) {
+      #game-area {
+        height: 50vh;
+      }
+      .target {
+        width: 40px;
+        height: 40px;
+      }
+      #results {
+        font-size: 16px;
+      }
+      #start-btn {
+        font-size: 16px;
+        padding: 10px 20px;
+      }
     }
   </style>
 </head>
@@ -95,66 +118,63 @@
     </div><button id="start-btn">Start Round</button>
   </main>
   <script>
-  const gameArea = document.getElementById("game-area");
-  const results = document.getElementById("results");
-  const startBtn = document.getElementById("start-btn");
-  let times = [];
-  let startTime;
-  let targetsHit = 0;
-  const totalTargets = 10;
-  const targetSize = 60;
+    const gameArea = document.getElementById("game-area");
+    const results = document.getElementById("results");
+    const startBtn = document.getElementById("start-btn");
+    let times = [];
+    let startTime;
+    let targetsHit = 0;
+    const totalTargets = 10;
+    let targetSize = 60;
 
-  function spawnTarget() {
-    if (targetsHit >= totalTargets) {
-      endRound();
-      return;
+    function spawnTarget() {
+      if (targetsHit >= totalTargets) {
+        endRound();
+        return;
+      }
+
+      const target = document.createElement("div");
+      target.classList.add("target");
+
+      const areaWidth = gameArea.clientWidth;
+      const areaHeight = gameArea.clientHeight;
+      const x = Math.random() * (areaWidth - targetSize);
+      const y = Math.random() * (areaHeight - targetSize);
+
+      target.style.left = `${x}px`;
+      target.style.top = `${y}px`;
+
+      gameArea.innerHTML = "";
+      gameArea.appendChild(target);
+
+      startTime = Date.now();
+
+      target.onclick = () => {
+        const reaction = Date.now() - startTime;
+        times.push(reaction);
+        targetsHit++;
+        results.textContent = `Target ${targetsHit}/${totalTargets} — Reaction: ${reaction} ms`;
+        spawnTarget();
+      };
     }
 
-    const target = document.createElement("div");
-    target.classList.add("target");
+    function endRound() {
+      gameArea.innerHTML = "";
+      const sum = times.reduce((a, b) => a + b, 0);
+      const avg = Math.round(sum / times.length);
+      results.textContent = `Round finished! Average reaction time: ${avg} ms`;
+      times = [];
+      targetsHit = 0;
+      startBtn.style.display = "inline-block";
+    }
 
-    const areaWidth = gameArea.clientWidth;
-    const areaHeight = gameArea.clientHeight;
-    const x = Math.random() * (areaWidth - targetSize);
-    const y = Math.random() * (areaHeight - targetSize);
+    function startRound() {
+      results.textContent = "Round started! Click the target as fast as you can!";
+      startBtn.style.display = "none";
+      spawnTarget();
+    }
 
-    target.style.left = `${x}px`;
-    target.style.top = `${y}px`;
-
-    gameArea.innerHTML = ""; // clear old target
-    gameArea.appendChild(target);
-
-    startTime = Date.now();
-
-    target.onclick = () => {
-      const reaction = Date.now() - startTime;
-      times.push(reaction);
-      targetsHit++;
-      results.textContent = `Target ${targetsHit}/${totalTargets} — Reaction: ${reaction} ms`;
-      spawnTarget(); // next target
-    };
-  }
-
-  function endRound() {
-    gameArea.innerHTML = "";
-    const sum = times.reduce((a, b) => a + b, 0);
-    const avg = Math.round(sum / times.length);
-    results.textContent = `Round finished! Average reaction time: ${avg} ms`;
-
-    // Reset for next round
-    times = [];
-    targetsHit = 0;
-    startBtn.style.display = "inline-block"; // show start button again
-  }
-
-  function startRound() {
-    results.textContent = "Round started! Click the target as fast as you can!";
-    startBtn.style.display = "none"; // hide button during round
-    spawnTarget();
-  }
-
-  startBtn.onclick = startRound;
+    startBtn.onclick = startRound;
   </script>
 </body>
-
 </html>
