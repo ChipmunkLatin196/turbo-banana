@@ -3,35 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="styles.css">
+  <title></title>
 </head>
 <body>
-
-<nav>
-  <a href="index.html">Home</a>
-  <a href="passgen.html">Password Generator</a>
-</nav>
-
-<main>
-  <!-- Password display box (hidden until generated) -->
-  <div id="pw"></div>
-
-  <!-- Slider -->
-  <div class="slider-container">
-    <label for="length">Length:</label>
-    <input type="range" id="length" min="4" max="64" value="16">
-    <span id="lenDisplay">16</span>
-  </div>
-
-  <!-- Buttons -->
-  <div>
-    <button class="button" onclick="generate()">Generate</button>
-    <button class="button" onclick="copyPassword()">Copy</button>
-  </div>
-</main>
-
-<footer></footer>
-
-<script>
+  <nav>
+    <a href="index.html">Home</a> <a href="passgen.html">Password Generator</a>
+  </nav>
+  <main>
+    <div id="pw"></div>
+    <div class="slider-container">
+      <label for="length">Length:</label> <input type="range" id="length" min="4" max="64" value="16"> <span id="lenDisplay">16</span>
+    </div>
+    <div>
+      <button class="button" onclick="generate()">Generate</button> <button class="button" onclick="copyPassword()">Copy</button>
+    </div>
+  </main>
+  <script>
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()";
   const lengthSlider = document.getElementById("length");
   const lengthLabel = document.getElementById("lenDisplay");
@@ -65,8 +52,6 @@
       alert("Password copied!");
     });
   }
-</script>
-
+  </script>
 </body>
 </html>
-
