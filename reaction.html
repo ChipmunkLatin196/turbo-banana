@@ -3,16 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="assets/css/styles.css">
-  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="assets/images/android-chrome-192x192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="assets/images/android-chrome-512x512.png">
-  <link rel="manifest" href="assets/images/site.webmanifest">
   <title>Reaction Time Test</title>
-  <link rel="stylesheet" href="styles.css">
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -52,18 +43,21 @@
       padding: 10px;
     }
 
-    #test-area {
-      width: 100%;
-      height: 70vh;
+    #game-area {
+      position: relative;
+      width: 90vw;
+      height: 60vh;
       background: #333;
-      color: #fff;
+      border: 4px solid #333;
+      border-radius: 8px;
+      max-width: 600px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 32px;
+      color: #fff;
       cursor: pointer;
       user-select: none;
-      border-radius: 6px;
       text-align: center;
     }
 
@@ -83,25 +77,13 @@
     }
 
     #history-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      list-style: none;
-      padding: 0;
-      margin: 10px 0 0 0;
-      justify-content: center;
-    }
-
-    #history-list li {
-      background: #eee;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 14px;
+      margin-left: 8px;
+      font-weight: bold;
     }
 
     @media (max-width: 600px) {
-      #test-area {
-        height: 60vh;
+      #game-area {
+        height: 50vh;
         font-size: 24px;
       }
       #results {
@@ -109,10 +91,6 @@
       }
       #history {
         font-size: 14px;
-      }
-      #history-list li {
-        font-size: 12px;
-        padding: 3px 6px;
       }
     }
   </style>
@@ -122,63 +100,59 @@
     <a href="index.html">Home</a>
   </nav>
   <main>
-    <div id="test-area">
+    <div id="game-area">
       Click anywhere to begin
     </div>
     <div id="results"></div>
     <div id="history">
-      <strong>Last 10 results:</strong>
-      <ul id="history-list"></ul>
+      <strong>Last 10 results:</strong> <span id="history-list"></span>
     </div>
   </main>
   <script>
-  let startTime, timeoutId, waiting = false;
-  const testArea = document.getElementById("test-area");
-  const results = document.getElementById("results");
-  const historyList = document.getElementById("history-list");
-  let history = [];
+    let startTime, timeoutId, waiting = false;
+    const gameArea = document.getElementById("game-area");
+    const results = document.getElementById("results");
+    const historyList = document.getElementById("history-list");
+    let history = [];
 
-  function startRound() {
-    testArea.style.background = "#333";
-    testArea.textContent = "Wait for green...";
-    waiting = true;
+    function startRound() {
+      gameArea.style.background = "#333";
+      gameArea.textContent = "Wait for green...";
+      waiting = true;
 
-    const delay = Math.floor(Math.random() * 4000) + 1000; // random 1–5s
-    timeoutId = setTimeout(() => {
-      testArea.style.background = "green";
-      testArea.textContent = "CLICK!";
-      startTime = Date.now();
-      waiting = false;
-    }, delay);
-  }
-
-  function updateHistory(time) {
-    history.unshift(time);
-    if (history.length > 10) {
-      history.pop();
+      const delay = Math.floor(Math.random() * 4000) + 1000; // random 1–5s
+      timeoutId = setTimeout(() => {
+        gameArea.style.background = "green";
+        gameArea.textContent = "CLICK!";
+        startTime = Date.now();
+        waiting = false;
+      }, delay);
     }
-    historyList.innerHTML = history.map(t => `<li>${t} ms</li>`).join("");
-  }
 
-  testArea.onclick = () => {
-    if (waiting) {
-      results.textContent = "Too soon! Wait for green.";
-      clearTimeout(timeoutId);
+    function updateHistory(time) {
+      history.unshift(time + "ms");
+      if (history.length > 10) history.pop();
+      historyList.textContent = history.join(" ");
+    }
+
+    gameArea.onclick = () => {
+      if (waiting) {
+        results.textContent = "Too soon! Wait for green.";
+        clearTimeout(timeoutId);
+        startRound();
+        return;
+      }
+
+      if (gameArea.style.background === "green") {
+        const reaction = Date.now() - startTime;
+        results.textContent = `Your reaction time: ${reaction} ms`;
+        updateHistory(reaction);
+        startRound();
+        return;
+      }
+
       startRound();
-      return;
-    }
-
-    if (testArea.style.background === "green") {
-      const reaction = Date.now() - startTime;
-      results.textContent = `Your reaction time: ${reaction} ms`;
-      updateHistory(reaction);
-      startRound();
-      return;
-    }
-
-    startRound();
-  };
+    };
   </script>
 </body>
 </html>
-
