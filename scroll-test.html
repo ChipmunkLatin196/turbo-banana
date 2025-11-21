@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/images/android-chrome-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/images/android-chrome-512x512.png">
+  <link rel="manifest" href="assets/images/site.webmanifest">
+  <title>Scroll Test</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f5e6;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      padding: 20px 0;
+      background: #f5f5e6;
+    }
+
+    nav a {
+      color: #333;
+      text-decoration: none;
+      margin: 0 20px;
+      font-size: 18px;
+      transition: color 0.3s ease;
+    }
+
+    nav a:hover {
+      color: #000;
+      text-decoration: underline;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    #game-area {
+      position: relative;
+      width: 90vw;
+      height: 60vh;
+      background: #f5f5e6;
+      border: 4px solid #333;
+      border-radius: 8px;
+      overflow: hidden;
+      max-width: 600px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    #results {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+      text-align: center;
+    }
+
+    #start-btn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 18px;
+      border: none;
+      border-radius: 6px;
+      background: #333;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    #start-btn:hover {
+      background: #000;
+    }
+
+    @media (max-width: 600px) {
+      #game-area {
+        height: 50vh;
+        font-size: 18px;
+      }
+      #results {
+        font-size: 16px;
+      }
+      #start-btn {
+        font-size: 16px;
+        padding: 10px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+  </nav>
+  <main>
+    <div id="game-area">Press "Start Test"</div>
+    <div id="results">Spin your scroll wheel inside the box</div>
+    <button id="start-btn">Start Test</button>
+  </main>
+  <script>
+    const gameArea = document.getElementById("game-area");
+    const results = document.getElementById("results");
+    const startBtn = document.getElementById("start-btn");
+
+    let scrollCount = 0;
+    let timeLeft = 10;
+    let timerInterval;
+
+    function startTest() {
+      scrollCount = 0;
+      timeLeft = 10;
+      gameArea.textContent = "Scrolls: 0";
+      results.textContent = `Time left: ${timeLeft}s`;
+      startBtn.style.display = "none";
+
+      // countdown
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        results.textContent = `Time left: ${timeLeft}s`;
+        if (timeLeft <= 0) endTest();
+      }, 1000);
+
+      // listen for scroll events
+      gameArea.addEventListener("wheel", () => {
+        scrollCount++;
+        gameArea.textContent = `Scrolls: ${scrollCount}`;
+      });
+    }
+
+    function endTest() {
+      clearInterval(timerInterval);
+      gameArea.textContent = "";
+      results.textContent = `Finished! You scrolled ${scrollCount} times in 10 seconds.`;
+      startBtn.style.display = "inline-block";
+    }
+
+    startBtn.onclick = startTest;
+  </script>
+</body>
+</html>
