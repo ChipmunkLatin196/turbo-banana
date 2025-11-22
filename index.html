@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Terminal Index</title>
+  <!-- Favicons -->
+  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/images/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/images/android-chrome-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/images/android-chrome-512x512.png">
+  <link rel="manifest" href="assets/images/site.webmanifest">
+  <style>
+    @font-face {
+      font-family: 'IBM Plex Mono';
+      src: url('fonts/IBMPlexMono-Regular.ttf') format('truetype');
+    }
+    @font-face {
+      font-family: 'IBM Plex Mono';
+      src: url('fonts/IBMPlexMono-Bold.ttf') format('truetype');
+    }
+
+    body {
+      background-color: black;
+      color: #00ff00; /* terminal green */
+      font-family: 'IBM Plex Mono', monospace;
+      margin: 0;
+      padding: 20px;
+    }
+
+    .line {
+      margin: 10px 0;
+    }
+
+    a {
+      color: #00ff00;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* block-style blinking cursor */
+    .cursor {
+      display: inline-block;
+      width: 10px;
+      height: 20px;
+      background-color: #00ff00;
+      vertical-align: bottom;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="line">$ ./maze <a href="maze.html">run</a></div>
+  <div class="line">$ ./aim_test <a href="aim_test.html">run</a></div>
+  <div class="line">$ ./scroll_test <a href="scroll_test.html">run</a></div>
+  <div class="line">$ ./click_test <a href="click_test.html">run</a></div>
+  <div class="line">$ ./reaction_test <a href="reaction_test.html">run</a></div>
+  <!-- blinking cursor at the bottom -->
+  <div class="line"><span class="cursor"></span></div>
+</body>
+</html>

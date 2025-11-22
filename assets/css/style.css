@@ -1,0 +1,40 @@
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('fonts/IBMPlexMono-Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('fonts/IBMPlexMono-Bold.ttf') format('truetype');
+}
+
+body {
+  background-color: black;
+  color: #00ff00; /* terminal green */
+  font-family: 'IBM Plex Mono', monospace;
+  margin: 0;
+  padding: 20px;
+}
+
+.line {
+  margin: 10px 0;
+}
+
+a {
+  color: #00ff00;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* blinking underscore cursor */
+.cursor {
+  display: inline-block;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
