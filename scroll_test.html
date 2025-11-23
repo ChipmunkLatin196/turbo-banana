@@ -2,70 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>scroll_test</title>
+  <title>Scroll Test</title>
   <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <style>
-    @font-face {
-      font-family: 'IBM Plex Mono';
-      src: url('fonts/IBMPlexMono-Regular.ttf') format('truetype');
-    }
-    body {
-      background-color: black;
-      color: #00ff00;
-      font-family: 'IBM Plex Mono', monospace;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      text-align: center;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    #game-area {
-      width: 90vw;
-      height: 60vh;
-      background: black;
-      border: 2px solid #00ff00;
-      max-width: 600px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: bold;
-    }
-    #results {
-      margin-top: 20px;
-      font-size: 16px;
-    }
-    #start-btn, #home-btn {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      border: 2px solid #00ff00;
-      background: black;
-      color: #00ff00;
-      cursor: pointer;
-      transition: background 0.3s ease, color 0.3s ease;
-    }
-    #start-btn:hover, #home-btn:hover {
-      background: #00ff00;
-      color: black;
-    }
-  </style>
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
   <main>
-    <div id="game-area">
-      Press "Start Test"
+    <div id="game-area">Press "Start Test"</div>
+    <div id="results">Spin your scroll wheel inside the box</div>
+    <button id="start-btn">Start Test</button>
+
+    <div class="prompt-line">
+      <a class="prompt-text" href="index.html">$ cd ~</a>
+      <span class="prompt-cursor"></span>
     </div>
-    <div id="results">
-      Spin your scroll wheel inside the box
-    </div><button id="start-btn">Start Test</button> <button id="home-btn" onclick="location.href='index.html'">$ cd ~</button>
   </main>
   <script>
     const gameArea = document.getElementById("game-area");
@@ -89,17 +39,13 @@
       timerInterval = setInterval(() => {
         timeLeft--;
         results.textContent = `Time left: ${timeLeft}s`;
-
-        if (timeLeft <= 0) {
-          endTest();
-        }
+        if (timeLeft <= 0) endTest();
       }, 1000);
     }
 
     function endTest() {
       clearInterval(timerInterval);
       testRunning = false;
-
       gameArea.textContent = `Final Scrolls: ${scrollCount}`;
       results.textContent = `Your score: ${scrollCount} scrolls in 10 seconds`;
       startBtn.style.display = "inline-block";
@@ -107,8 +53,6 @@
 
     gameArea.addEventListener("wheel", (e) => {
       if (!testRunning) return;
-
-      // Count every wheel event as one scroll
       scrollCount++;
       gameArea.textContent = `Scrolls: ${scrollCount}`;
     });
