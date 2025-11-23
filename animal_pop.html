@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>circle_pop</title>
+<link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+<style>
+  @font-face {
+    font-family: 'IBM Plex Mono';
+    src: url('fonts/IBMPlexMono-Regular.ttf') format('truetype');
+  }
+
+  body {
+    background-color: black;
+    color: #00ff00;
+    font-family: 'IBM Plex Mono', monospace;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    text-align: center;
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #instructions {
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+
+  #game-area {
+    position: relative;
+    width: 90vw;
+    height: 60vh;
+    background: black;
+    border: 2px solid #00ff00;
+    max-width: 600px;
+    overflow: hidden;
+  }
+
+  #results {
+    margin-top: 20px;
+    font-size: 16px;
+  }
+
+  #start-btn, #home-btn {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: 2px solid #00ff00;
+    background: black;
+    color: #00ff00;
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  #start-btn:hover, #home-btn:hover {
+    background: #00ff00;
+    color: black;
+  }
+
+  .circle {
+    position: absolute;
+    width: auto;
+    height: auto;
+    background: black;
+    border: 1px solid currentColor;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1.1;
+    white-space: pre;
+    text-shadow: 0 0 4px currentColor;
+    box-shadow: 0 0 6px currentColor, inset 0 0 6px currentColor;
+  }
+
+  .green { color: #00ff00; }
+  .cyan { color: #00ffff; }
+  .red { color: #ff0000; }
+  .yellow { color: #ffff00; }
+  .pink { color: #ff00ff; }
+</style>
+</head>
+<body>
+<main>
+  <div id="instructions">
+    Press "Start Test" then pop the terminal ASCII creatures endlessly!
+  </div>
+
+  <div id="game-area"></div>
+
+  <div id="results">
+    Pops: 0
+  </div>
+
+  <button id="start-btn">Start Test</button>
+  <button id="home-btn" onclick="location.href='index.html'">$ cd ~</button>
+</main>
+
+<script>
+const gameArea = document.getElementById("game-area");
+const results = document.getElementById("results");
+const startBtn = document.getElementById("start-btn");
+const instructions = document.getElementById("instructions");
+
+let popCount = 0, spawnInterval, testRunning = false;
+
+const asciiCreatures = [
+`+-------+
+| /\\_/\\ |
+|( o.o )|
+| > ^ < |
++-------+`,
+`+-----------+
+| ^__^      |
+| (oo)\\____ |
+| (__)\\    )|
+|     ||--|||
++-----------+`,
+`+-----------+
+|  /\\_/\\    |
+| ( -.- )   |
+|  z  z  z  |
++-----------+`,
+`+---------+
+|  ()_()  |
+|  (o.o)  |
+|  > ^ <  |
++---------+`,
+`+---------+
+|   //    |
+|  (oo)   |
+|  /-/    |
+| // \\\\   |
++---------+`,
+`+-----------+
+|   ^__^    |
+|  ( 'o' )  |
+|  (     )  |
+|   ^^ ^^   |
++-----------+`,
+`+-----------+
+|   ,~.     |
+|  (o,o)    |
+|  <)   )╯  |
+|   " "     |
++-----------+`,
+`+-------------+
+|   >>\\.      |
+|  (o o)      |
+|  /   \\      |
+| //   \\\\     |
++-------------+`
+];
+
+const colorClasses = ['green','cyan','red','yellow','pink'];
+
+function startTest() {
+  popCount = 0;
+  testRunning = true;
+  instructions.textContent = "Pop the ASCII creatures!";
+  results.textContent = `Pops: ${popCount}`;
+  startBtn.style.display = "none";
+
+  // spawn 3 creatures every 700ms (slower)
+  spawnInterval = setInterval(() => {
+    for (let i = 0; i < 3; i++) {
+      spawnCircle();
+    }
+  }, 700);
+}
+
+function endTest() {
+  clearInterval(spawnInterval);
+  testRunning = false;
+  instructions.textContent = "Press Start Test then pop the ASCII creatures!";
+  results.textContent = `Total pops: ${popCount}`;
+  startBtn.style.display = "inline-block";
+  gameArea.innerHTML = "";
+}
+
+function spawnCircle() {
+  const circle = document.createElement("div");
+  circle.classList.add("circle");
+
+  const top = Math.random() * (gameArea.clientHeight - 120);
+  const left = Math.random() * (gameArea.clientWidth - 140);
+  circle.style.top = top + "px";
+  circle.style.left = left + "px";
+
+  const creature = asciiCreatures[Math.floor(Math.random() * asciiCreatures.length)];
+  circle.textContent = creature;
+
+  const colorClass = colorClasses[Math.floor(Math.random() * colorClasses.length)];
+  circle.classList.add(colorClass);
+
+  circle.addEventListener("click", () => {
+    if (testRunning) {
+      popCount++;
+      results.textContent = `Pops: ${popCount}`;
+      circle.remove();
+    }
+  });
+
+  gameArea.appendChild(circle);
+
+  // stay longer: 6 seconds
+  setTimeout(() => {
+    if (gameArea.contains(circle)) circle.remove();
+  }, 6000);
+}
+
+startBtn.addEventListener("click", startTest);
+</script>
+</body>
+</html>
