@@ -2,90 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>maze_test</title>
+  <title>Maze Test</title>
   <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <style>
-    @font-face {
-      font-family: 'IBM Plex Mono';
-      src: url('fonts/IBMPlexMono-Regular.ttf') format('truetype');
-      font-weight: 400;
-    }
-    @font-face {
-      font-family: 'IBM Plex Mono';
-      src: url('fonts/IBMPlexMono-Bold.ttf') format('truetype');
-      font-weight: 700;
-    }
-
-    body {
-      background-color: black;
-      color: #00ff00;
-      font-family: 'IBM Plex Mono', monospace;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      text-align: center;
-    }
-
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 10px;
-    }
-
-    #hud {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-      font-size: 16px;
-    }
-
-    #maze-wrap {
-      border: 2px solid #00ff00;
-      background: black;
-      overflow: hidden;
-    }
-
-    #maze {
-      display: block;
-      background: black;
-    }
-
-    #restart, #home-btn {
-      background: black;
-      color: #00ff00;
-      border: 2px solid #00ff00;
-      padding: 8px 16px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: background 0.3s ease, color 0.3s ease;
-      font-family: 'IBM Plex Mono', monospace;
-    }
-    #restart:hover, #home-btn:hover {
-      background: #00ff00;
-      color: black;
-    }
-
-    #tip {
-      font-size: 14px;
-      color: #00ff00;
-    }
-  </style>
+  <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
   <main>
     <div id="hud">
-      <span id="status">Find the green exit!</span> <span>Time: <strong id="time">0.0s</strong></span> <span>Moves: <strong id="moves">0</strong></span> <button id="restart">New maze</button> <button id="home-btn" onclick="location.href='index.html'">$ cd ~</button>
+      <span id="status">Find the green exit!</span>
+      <span>Time: <strong id="time">0.0s</strong></span>
+      <span>Moves: <strong id="moves">0</strong></span>
+      <button id="restart">New maze</button>
     </div>
     <div id="maze-wrap">
       <canvas id="maze" width="800" height="600"></canvas>
     </div>
-    <div id="tip">
-      Use arrow keys or WASD.
+    <div id="tip">Use arrow keys or WASD.</div>
+
+    <div class="prompt-line">
+      <a class="prompt-text" href="index.html">$ cd ~</a>
+      <span class="prompt-cursor"></span>
     </div>
   </main>
   <script>
@@ -233,15 +169,12 @@
       startTimer();
     }
 
-    // clean single event listener
     window.addEventListener("keydown", (e) => {
       if (gameOver) return;
 
       const k = e.key.toLowerCase();
 
-      if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) {
-        e.preventDefault();
-      }
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) e.preventDefault();
 
       if (k === "arrowup" || k === "w") movePlayer(0);
       else if (k === "arrowright" || k === "d") movePlayer(1);
@@ -251,7 +184,6 @@
 
     restartBtn.addEventListener("click", newMaze);
 
-    // Start immediately
     newMaze();
   </script>
 </body>
