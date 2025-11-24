@@ -3,12 +3,12 @@
 ======================= */
 @font-face {
   font-family: 'IBM Plex Mono';
-  src: url('../fonts/IBMPlexMono-Regular.ttf') format('truetype');
+  src: url('assets/fonts/IBMPlexMono-Regular.ttf') format('truetype');
   font-weight: 400;
 }
 @font-face {
   font-family: 'IBM Plex Mono';
-  src: url('../fonts/IBMPlexMono-Bold.ttf') format('truetype');
+  src: url('assets/fonts/IBMPlexMono-Bold.ttf') format('truetype');
   font-weight: 700;
 }
 
@@ -46,7 +46,6 @@ a:hover {
   vertical-align: bottom;
 }
 
-/* Optional blink animation */
 @keyframes blink {
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0; }
@@ -55,7 +54,6 @@ a:hover {
   animation: blink 1s infinite;
 }
 
-/* Prompt-style */
 .prompt-line {
   display: flex;
   align-items: center;
@@ -71,13 +69,13 @@ a:hover {
 }
 
 /* =======================
-   Main layout (default: centered for all pages)
+   Main layout
 ======================= */
 main {
   display: flex;
   flex-direction: column;
-  align-items: center;     /* center horizontally */
-  justify-content: center; /* center vertically */
+  align-items: center;
+  justify-content: center;
   min-height: 100vh;
   text-align: center;
   gap: 12px;
@@ -85,16 +83,16 @@ main {
 }
 
 /* =======================
-   Index page layout (top-left, less spacing)
+   Index page layout
 ======================= */
 .index-main {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;     /* align to left */
-  justify-content: flex-start; /* align to top */
+  align-items: flex-start;
+  justify-content: flex-start;
   text-align: left;
-  gap: 6px;                    /* tighter spacing */
-  padding: 10px;               /* less padding */
+  gap: 6px;
+  padding: 10px;
 }
 
 /* =======================
@@ -145,18 +143,13 @@ button:hover {
    Reaction, Scroll, Click Tests
 ======================= */
 #game-area {
+  position: relative;       /* important for creature placement */
   width: 90vw;
   height: 60vh;
   max-width: 600px;
   background: black;
   border: 2px solid #00ff00;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: bold;
-  cursor: pointer;
-  user-select: none;
+  overflow: hidden;
 }
 
 #results {
@@ -183,7 +176,7 @@ button:hover {
 }
 
 /* =======================
-   Instructions for Click Test
+   Instructions
 ======================= */
 #instructions {
   margin-bottom: 10px;
@@ -204,11 +197,48 @@ button:hover {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
-/* Hover effect */
 #start-btn:hover, #home-btn:hover {
   background: #00ff00;
   color: black;
 }
+
+/* =======================
+   Creature Style
+======================= */
+.circle {
+  position: absolute;
+  background: black;
+  border: 1px solid currentColor;
+  padding: 4px 6px;
+  cursor: pointer;
+
+  font-family: 'IBM Plex Mono', monospace;
+  white-space: pre;              /* preserve line breaks */
+  font-feature-settings: "liga" 0; /* disable ligatures */
+  letter-spacing: 0;
+  line-height: 1;
+  font-size: 14px;
+
+  text-shadow: 0 0 4px currentColor;
+  box-shadow: 0 0 6px currentColor, inset 0 0 6px currentColor;
+
+  user-select: none; /* 🚫 Prevent text selection */
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.circle.pop {
+  transform: scale(0.7);
+  opacity: 0;
+}
+
+.green  { color: #00ff00; }
+.cyan   { color: #00ffff; }
+.red    { color: #ff0000; }
+.yellow { color: #ffff00; }
+.pink   { color: #ff00ff; }
+.orange { color: #ffa500; }
+.blue   { color: #0000ff; }
+.purple { color: #800080; }
 
 /* =======================
    Responsive Adjustments
