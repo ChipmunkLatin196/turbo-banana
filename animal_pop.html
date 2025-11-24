@@ -4,89 +4,7 @@
 <meta charset="UTF-8">
 <title>animal_pop</title>
 <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-<style>
-  @font-face {
-    font-family: 'IBM Plex Mono';
-    src: url('fonts/IBMPlexMono-Regular.ttf') format('truetype');
-  }
-
-  body {
-    background-color: black;
-    color: #00ff00;
-    font-family: 'IBM Plex Mono', monospace;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    text-align: center;
-  }
-
-  main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #instructions {
-    margin-bottom: 10px;
-    font-size: 16px;
-  }
-
-  #game-area {
-    position: relative;
-    width: 90vw;
-    height: 60vh;
-    background: black;
-    border: 2px solid #00ff00;
-    max-width: 600px;
-    overflow: hidden;
-  }
-
-  #results {
-    margin-top: 20px;
-    font-size: 16px;
-  }
-
-  #start-btn, #stop-btn, #home-btn {
-    margin-top: 20px;
-    padding: 10px 20px;
-    font-size: 16px;
-    border: 2px solid #00ff00;
-    background: black;
-    color: #00ff00;
-    cursor: pointer;
-    transition: background 0.3s ease, color 0.3s ease;
-  }
-
-  #start-btn:hover, #stop-btn:hover, #home-btn:hover {
-    background: #00ff00;
-    color: black;
-  }
-
-  .circle {
-    position: absolute;
-    background: black;
-    border: 1px solid currentColor;
-    padding: 4px 6px;
-    cursor: pointer;
-    font-size: 14px;
-    line-height: 1.1;
-    white-space: pre;
-    text-shadow: 0 0 4px currentColor;
-    box-shadow: 0 0 6px currentColor, inset 0 0 6px currentColor;
-  }
-
-  .green  { color: #00ff00; }
-  .cyan   { color: #00ffff; }
-  .red    { color: #ff0000; }
-  .yellow { color: #ffff00; }
-  .pink   { color: #ff00ff; }
-  .orange { color: #ffa500; }
-  .blue   { color: #0000ff; }
-  .purple { color: #800080; }
-</style>
+<link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 <main>
@@ -215,13 +133,41 @@ function spawnCircle() {
 
   gameArea.appendChild(circle);
 
-  // Measure actual size
   const circleWidth = circle.offsetWidth;
   const circleHeight = circle.offsetHeight;
 
-  // Safe random positions
-  const top = Math.random() * (gameArea.clientHeight - circleHeight);
-  const left = Math.random() * (gameArea.clientWidth - circleWidth);
+  let top, left;
+  let tries = 0;
+  let overlap;
+
+  do {
+    top = Math.random() * (gameArea.clientHeight - circleHeight);
+    left = Math.random() * (gameArea.clientWidth - circleWidth);
+
+    overlap = false;
+    const existingCircles = gameArea.querySelectorAll(".circle");
+    existingCircles.forEach(c => {
+      if (c === circle) return;
+      const rect1 = { x: left, y: top, w: circleWidth, h: circleHeight };
+      const rect2 = {
+        x: parseFloat(c.style.left),
+        y: parseFloat(c.style.top),
+        w: c.offsetWidth,
+        h: c.offsetHeight
+      };
+
+      if (!(rect1.x + rect1.w < rect2.x ||
+            rect1.x > rect2.x + rect2.w ||
+            rect1.y + rect1.h < rect2.y ||
+            rect1.y > rect2.y + rect2.h)) {
+        overlap = true;
+      }
+    });
+
+    tries++;
+    if (tries > 50) break;
+  } while (overlap);
+
   circle.style.top = top + "px";
   circle.style.left = left + "px";
 
@@ -229,7 +175,10 @@ function spawnCircle() {
     if (testRunning) {
       popCount++;
       results.textContent = `Pops: ${popCount}`;
-      circle.remove();
+
+      // Pop animation
+      circle.classList.add("pop");
+      setTimeout(() => circle.remove(), 200);
     }
   });
 
