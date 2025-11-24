@@ -32,71 +32,62 @@ const instructions = document.getElementById("instructions");
 
 let popCount = 0, spawnInterval, testRunning = false;
 
+// Map each creature to a sound file pop1.mp3 ... pop8.mp3
 const asciiCreatures = [
   { art: `+-----------+
 |   /\\_/\\   |
 |  ( o.o )  |
 |   > ^ <   |
-|           |
-|           |
-+-----------+`, color: "green" },
++-----------+`, color: "green", sound: "pop1.mp3" },
 
   { art: `+-----------+
 |   ^__^    |
 |  (oo)     |
 |  (__)     |
-|           |
-|           |
-+-----------+`, color: "cyan" },
++-----------+`, color: "cyan", sound: "pop2.mp3" },
 
   { art: `+-----------+
 |   /\\_/\\   |
 |  ( -.- )  |
 |   zzz     |
-|           |
-|           |
-+-----------+`, color: "red" },
++-----------+`, color: "red", sound: "pop3.mp3" },
 
   { art: `+-----------+
 |   ()_()   |
 |   (o.o)   |
 |   > ^ <   |
-|           |
-|           |
-+-----------+`, color: "yellow" },
++-----------+`, color: "yellow", sound: "pop4.mp3" },
 
   { art: `+-----------+
 |    //     |
 |   (oo)    |
 |   /-/     |
-|           |
-|           |
-+-----------+`, color: "pink" },
++-----------+`, color: "pink", sound: "pop5.mp3" },
 
   { art: `+-----------+
 |   ^__^    |
 |  ('o')    |
 |  (   )    |
-|           |
-|           |
-+-----------+`, color: "orange" },
++-----------+`, color: "orange", sound: "pop6.mp3" },
 
   { art: `+-----------+
 |    ,~.    |
 |   (o,o)   |
 |   <) )╯   |
-|           |
-|           |
-+-----------+`, color: "blue" },
++-----------+`, color: "blue", sound: "pop7.mp3" },
 
   { art: `+-----------+
 |    >>\\.   |
 |   (o o)   |
 |   /   \\   |
-|           |
-|           |
-+-----------+`, color: "purple" }
++-----------+`, color: "purple", sound: "pop8.mp3" }
 ];
+
+// Helper to play sound
+function playSound(file) {
+  const audio = new Audio(`assets/sfx/pops/${file}`);
+  audio.play();
+}
 
 function startTest() {
   popCount = 0;
@@ -175,6 +166,9 @@ function spawnCircle() {
     if (testRunning) {
       popCount++;
       results.textContent = `Pops: ${popCount}`;
+
+      // Play sound effect for this creature
+      playSound(creatureObj.sound);
 
       // Pop animation
       circle.classList.add("pop");
