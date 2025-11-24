@@ -143,7 +143,7 @@ button:hover {
    Reaction, Scroll, Click Tests
 ======================= */
 #game-area {
-  position: relative;       /* important for creature placement */
+  position: relative;       /* for creature placement */
   width: 90vw;
   height: 60vh;
   max-width: 600px;
@@ -222,7 +222,7 @@ button:hover {
   text-shadow: 0 0 4px currentColor;
   box-shadow: 0 0 6px currentColor, inset 0 0 6px currentColor;
 
-  user-select: none; /* 🚫 Prevent text selection */
+  user-select: none; /* Prevents text selection */
   transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
@@ -248,3 +248,4 @@ button:hover {
   #results { font-size: 14px; }
   #history { font-size: 12px; }
 }
+
