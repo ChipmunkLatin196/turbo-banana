@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>circle_pop</title>
+<title>animal_pop</title>
 <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
 <style>
   @font-face {
@@ -49,7 +49,7 @@
     font-size: 16px;
   }
 
-  #start-btn, #home-btn {
+  #start-btn, #stop-btn, #home-btn {
     margin-top: 20px;
     padding: 10px 20px;
     font-size: 16px;
@@ -60,15 +60,13 @@
     transition: background 0.3s ease, color 0.3s ease;
   }
 
-  #start-btn:hover, #home-btn:hover {
+  #start-btn:hover, #stop-btn:hover, #home-btn:hover {
     background: #00ff00;
     color: black;
   }
 
   .circle {
     position: absolute;
-    width: auto;
-    height: auto;
     background: black;
     border: 1px solid currentColor;
     padding: 4px 6px;
@@ -80,11 +78,14 @@
     box-shadow: 0 0 6px currentColor, inset 0 0 6px currentColor;
   }
 
-  .green { color: #00ff00; }
-  .cyan { color: #00ffff; }
-  .red { color: #ff0000; }
+  .green  { color: #00ff00; }
+  .cyan   { color: #00ffff; }
+  .red    { color: #ff0000; }
   .yellow { color: #ffff00; }
-  .pink { color: #ff00ff; }
+  .pink   { color: #ff00ff; }
+  .orange { color: #ffa500; }
+  .blue   { color: #0000ff; }
+  .purple { color: #800080; }
 </style>
 </head>
 <body>
@@ -100,6 +101,7 @@
   </div>
 
   <button id="start-btn">Start</button>
+  <button id="stop-btn" style="display:none;">Stop</button>
   <button id="home-btn" onclick="location.href='index.html'">$ cd ~</button>
 </main>
 
@@ -107,59 +109,76 @@
 const gameArea = document.getElementById("game-area");
 const results = document.getElementById("results");
 const startBtn = document.getElementById("start-btn");
+const stopBtn = document.getElementById("stop-btn");
 const instructions = document.getElementById("instructions");
 
 let popCount = 0, spawnInterval, testRunning = false;
 
 const asciiCreatures = [
-`+-------+
-| /\\_/\\ |
-|( o.o )|
-| > ^ < |
-+-------+`,
-`+-----------+
-| ^__^      |
-| (oo)\\____ |
-| (__)\\    )|
-|     ||--|||
-+-----------+`,
-`+-----------+
-|  /\\_/\\    |
-| ( -.- )   |
-|  z  z  z  |
-+-----------+`,
-`+---------+
-|  ()_()  |
-|  (o.o)  |
-|  > ^ <  |
-+---------+`,
-`+---------+
-|   //    |
-|  (oo)   |
-|  /-/    |
-| // \\\\   |
-+---------+`,
-`+-----------+
-|   ^__^    |
-|  ( 'o' )  |
-|  (     )  |
-|   ^^ ^^   |
-+-----------+`,
-`+-----------+
-|   ,~.     |
-|  (o,o)    |
-|  <)   )╯  |
-|   " "     |
-+-----------+`,
-`+-------------+
-|   >>\\.      |
-|  (o o)      |
-|  /   \\      |
-| //   \\\\     |
-+-------------+`
-];
+  { art: `+-----------+
+|   /\\_/\\   |
+|  ( o.o )  |
+|   > ^ <   |
+|           |
+|           |
++-----------+`, color: "green" },
 
-const colorClasses = ['green','cyan','red','yellow','pink'];
+  { art: `+-----------+
+|   ^__^    |
+|  (oo)     |
+|  (__)     |
+|           |
+|           |
++-----------+`, color: "cyan" },
+
+  { art: `+-----------+
+|   /\\_/\\   |
+|  ( -.- )  |
+|   zzz     |
+|           |
+|           |
++-----------+`, color: "red" },
+
+  { art: `+-----------+
+|   ()_()   |
+|   (o.o)   |
+|   > ^ <   |
+|           |
+|           |
++-----------+`, color: "yellow" },
+
+  { art: `+-----------+
+|    //     |
+|   (oo)    |
+|   /-/     |
+|           |
+|           |
++-----------+`, color: "pink" },
+
+  { art: `+-----------+
+|   ^__^    |
+|  ('o')    |
+|  (   )    |
+|           |
+|           |
++-----------+`, color: "orange" },
+
+  { art: `+-----------+
+|    ,~.    |
+|   (o,o)   |
+|   <) )╯   |
+|           |
+|           |
++-----------+`, color: "blue" },
+
+  { art: `+-----------+
+|    >>\\.   |
+|   (o o)   |
+|   /   \\   |
+|           |
+|           |
++-----------+`, color: "purple" }
+];
 
 function startTest() {
   popCount = 0;
@@ -167,8 +186,8 @@ function startTest() {
   instructions.textContent = "Pop the ASCII creatures!";
   results.textContent = `Pops: ${popCount}`;
   startBtn.style.display = "none";
+  stopBtn.style.display = "inline-block";
 
-  // spawn 3 creatures every 700ms (slower)
   spawnInterval = setInterval(() => {
     for (let i = 0; i < 3; i++) {
       spawnCircle();
@@ -179,9 +198,10 @@ function startTest() {
 function endTest() {
   clearInterval(spawnInterval);
   testRunning = false;
-  instructions.textContent = "Press Start Test then pop the ASCII creatures!";
+  instructions.textContent = "Press Start then pop the ASCII creatures!";
   results.textContent = `Total pops: ${popCount}`;
   startBtn.style.display = "inline-block";
+  stopBtn.style.display = "none";
   gameArea.innerHTML = "";
 }
 
@@ -189,16 +209,21 @@ function spawnCircle() {
   const circle = document.createElement("div");
   circle.classList.add("circle");
 
-  const top = Math.random() * (gameArea.clientHeight - 120);
-  const left = Math.random() * (gameArea.clientWidth - 140);
+  const creatureObj = asciiCreatures[Math.floor(Math.random() * asciiCreatures.length)];
+  circle.textContent = creatureObj.art;
+  circle.classList.add(creatureObj.color);
+
+  gameArea.appendChild(circle);
+
+  // Measure actual size
+  const circleWidth = circle.offsetWidth;
+  const circleHeight = circle.offsetHeight;
+
+  // Safe random positions
+  const top = Math.random() * (gameArea.clientHeight - circleHeight);
+  const left = Math.random() * (gameArea.clientWidth - circleWidth);
   circle.style.top = top + "px";
   circle.style.left = left + "px";
-
-  const creature = asciiCreatures[Math.floor(Math.random() * asciiCreatures.length)];
-  circle.textContent = creature;
-
-  const colorClass = colorClasses[Math.floor(Math.random() * colorClasses.length)];
-  circle.classList.add(colorClass);
 
   circle.addEventListener("click", () => {
     if (testRunning) {
@@ -208,15 +233,13 @@ function spawnCircle() {
     }
   });
 
-  gameArea.appendChild(circle);
-
-  // stay longer: 6 seconds
   setTimeout(() => {
     if (gameArea.contains(circle)) circle.remove();
   }, 6000);
 }
 
 startBtn.addEventListener("click", startTest);
+stopBtn.addEventListener("click", endTest);
 </script>
 </body>
 </html>
