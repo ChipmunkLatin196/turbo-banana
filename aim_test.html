@@ -86,36 +86,58 @@
     const results  = document.getElementById("results");
     const startBtn = document.getElementById("start-btn");
 
-    const TOTAL = 10, SIZE = 60;
-    let times = [], startTime, hit = 0;
+    const TOTAL = 10, SIZE = 60, MIN_DIST = 120;
+    let times = [], startTime, hit = 0, lastX = -1, lastY = -1;
 
     function spawnTarget() {
+      gameArea.innerHTML = "";
       if (hit >= TOTAL) return endRound();
+
+      const areaW = gameArea.clientWidth  || 600;
+      const areaH = gameArea.clientHeight || 400;
+
+      // Find a position far enough from the last target
+      let left, top, tries = 0;
+      do {
+        left = Math.random() * (areaW - SIZE);
+        top  = Math.random() * (areaH - SIZE);
+        const dx = (left + SIZE / 2) - lastX;
+        const dy = (top  + SIZE / 2) - lastY;
+        tries++;
+      } while (Math.sqrt(dx*dx + dy*dy) < MIN_DIST && tries < 50);
+
+      lastX = left + SIZE / 2;
+      lastY = top  + SIZE / 2;
+
       const t = document.createElement("div");
       t.className = "target";
-      t.style.left = Math.random() * (gameArea.clientWidth  - SIZE) + "px";
-      t.style.top  = Math.random() * (gameArea.clientHeight - SIZE) + "px";
-      gameArea.innerHTML = "";
+      t.style.left = left + "px";
+      t.style.top  = top  + "px";
       gameArea.appendChild(t);
-      startTime = Date.now();
+
+      // Start timing after the target is painted
+      requestAnimationFrame(() => { startTime = performance.now(); });
+
       t.onclick = () => {
-        times.push(Date.now() - startTime);
-        results.textContent = `Target ${++hit}/${TOTAL} — ${times[times.length-1]} ms`;
+        const ms = Math.round(performance.now() - startTime);
+        times.push(ms);
+        hit++;
+        results.textContent = `Target ${hit}/${TOTAL} — ${ms} ms`;
         spawnTarget();
       };
     }
 
     function endRound() {
-      gameArea.innerHTML = "";
       const avg = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
       results.textContent = `Done — avg ${avg} ms`;
-      times = []; hit = 0;
+      times = []; hit = 0; lastX = -1; lastY = -1;
       startBtn.style.display = "inline-block";
     }
 
     startBtn.onclick = () => {
       results.textContent = "Click the targets!";
       startBtn.style.display = "none";
+      hit = 0; times = []; lastX = -1; lastY = -1;
       spawnTarget();
     };
   </script>
