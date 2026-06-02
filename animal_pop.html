@@ -1,188 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>animal_pop</title>
-<link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-<link rel="stylesheet" href="assets/css/style.css">
+  <meta charset="UTF-8">
+  <title>Animal pop</title>
+  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #fafafa;
+      color: #111;
+      font-family: 'Space Grotesk', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    #game-area {
+      position: relative;
+      width: 90vw;
+      max-width: 600px;
+      height: 60vh;
+      background: #fafafa;
+      border: 1px solid #ebebeb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .creature {
+      position: absolute;
+      background: #fafafa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 4px 6px;
+      cursor: pointer;
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-size: 13px;
+      white-space: pre;
+      line-height: 1;
+      user-select: none;
+      transition: transform 0.15s, opacity 0.15s;
+    }
+
+    .creature:hover { border-color: #bbb; }
+
+    .creature.pop {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+
+    #results { font-size: 14px; color: #bbb; }
+
+    .btns { display: flex; gap: 10px; }
+
+    button {
+      background: #fafafa;
+      color: #111;
+      border: 1px solid #ebebeb;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      border-radius: 6px;
+      transition: border-color 0.2s;
+    }
+
+    button:hover { border-color: #bbb; }
+
+    #home {
+      font-size: 13px;
+      color: #bbb;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #home:hover { color: #111; }
+  </style>
 </head>
 <body>
-<main>
-  <div id="instructions">
-    Pop the creatures!
-  </div>
-
   <div id="game-area"></div>
-
-  <div id="results">
-    Pops: 0
+  <div id="results">Pop the creatures</div>
+  <div class="btns">
+    <button id="start-btn">Start</button>
+    <button id="stop-btn" style="display:none;">Stop</button>
   </div>
+  <a id="home" href="index.html">← back</a>
 
-  <button id="start-btn">Start</button>
-  <button id="stop-btn" style="display:none;">Stop</button>
-  <button id="home-btn" onclick="location.href='index.html'">$ cd ~</button>
-</main>
+  <script>
+    const area     = document.getElementById("game-area");
+    const results  = document.getElementById("results");
+    const startBtn = document.getElementById("start-btn");
+    const stopBtn  = document.getElementById("stop-btn");
 
-<script>
-const gameArea = document.getElementById("game-area");
-const results = document.getElementById("results");
-const startBtn = document.getElementById("start-btn");
-const stopBtn = document.getElementById("stop-btn");
-const instructions = document.getElementById("instructions");
+    const creatures = [
+      { art: `+-----------+\n|   /\\_/\\   |\n|  ( o.o )  |\n|   > ^ <   |\n+-----------+`, sound: "pop1.mp3" },
+      { art: `+-----------+\n|   ^__^    |\n|  (oo)     |\n|  (__)     |\n+-----------+`, sound: "pop2.mp3" },
+      { art: `+-----------+\n|   /\\_/\\   |\n|  ( -.- )  |\n|   zzz     |\n+-----------+`, sound: "pop3.mp3" },
+      { art: `+-----------+\n|   ()_()   |\n|   (o.o)   |\n|   > ^ <   |\n+-----------+`, sound: "pop4.mp3" },
+      { art: `+-----------+\n|    //     |\n|   (oo)    |\n|   /-/     |\n+-----------+`, sound: "pop5.mp3" },
+      { art: `+-----------+\n|   ^__^    |\n|  ('o')    |\n|  (   )    |\n+-----------+`, sound: "pop6.mp3" },
+      { art: `+-----------+\n|    ,~.    |\n|   (o,o)   |\n|   <) )╯   |\n+-----------+`, sound: "pop7.mp3" },
+      { art: `+-----------+\n|    >>\\\\   |\n|   (o o)   |\n|   /   \\   |\n+-----------+`, sound: "pop8.mp3" },
+    ];
 
-let popCount = 0, spawnInterval, testRunning = false;
+    let pops = 0, spawnTimer, running = false;
 
-// Map each creature to a sound file pop1.mp3 ... pop8.mp3
-const asciiCreatures = [
-  { art: `+-----------+
-|   /\\_/\\   |
-|  ( o.o )  |
-|   > ^ <   |
-+-----------+`, color: "green", sound: "pop1.mp3" },
-
-  { art: `+-----------+
-|   ^__^    |
-|  (oo)     |
-|  (__)     |
-+-----------+`, color: "cyan", sound: "pop2.mp3" },
-
-  { art: `+-----------+
-|   /\\_/\\   |
-|  ( -.- )  |
-|   zzz     |
-+-----------+`, color: "red", sound: "pop3.mp3" },
-
-  { art: `+-----------+
-|   ()_()   |
-|   (o.o)   |
-|   > ^ <   |
-+-----------+`, color: "yellow", sound: "pop4.mp3" },
-
-  { art: `+-----------+
-|    //     |
-|   (oo)    |
-|   /-/     |
-+-----------+`, color: "pink", sound: "pop5.mp3" },
-
-  { art: `+-----------+
-|   ^__^    |
-|  ('o')    |
-|  (   )    |
-+-----------+`, color: "orange", sound: "pop6.mp3" },
-
-  { art: `+-----------+
-|    ,~.    |
-|   (o,o)   |
-|   <) )╯   |
-+-----------+`, color: "blue", sound: "pop7.mp3" },
-
-  { art: `+-----------+
-|    >>\\.   |
-|   (o o)   |
-|   /   \\   |
-+-----------+`, color: "purple", sound: "pop8.mp3" }
-];
-
-// Helper to play sound
-function playSound(file) {
-  const audio = new Audio(`assets/sfx/pops/${file}`);
-  audio.play();
-}
-
-function startTest() {
-  popCount = 0;
-  testRunning = true;
-  instructions.textContent = "Pop the ASCII creatures!";
-  results.textContent = `Pops: ${popCount}`;
-  startBtn.style.display = "none";
-  stopBtn.style.display = "inline-block";
-
-  spawnInterval = setInterval(() => {
-    for (let i = 0; i < 3; i++) {
-      spawnCircle();
+    function playSound(file) {
+      new Audio(`assets/sfx/pops/${file}`).play().catch(() => {});
     }
-  }, 700);
-}
 
-function endTest() {
-  clearInterval(spawnInterval);
-  testRunning = false;
-  instructions.textContent = "Press Start then pop the ASCII creatures!";
-  results.textContent = `Total pops: ${popCount}`;
-  startBtn.style.display = "inline-block";
-  stopBtn.style.display = "none";
-  gameArea.innerHTML = "";
-}
+    function spawn() {
+      const c = creatures[Math.floor(Math.random() * creatures.length)];
+      const el = document.createElement("div");
+      el.className = "creature";
+      el.textContent = c.art;
+      area.appendChild(el);
 
-function spawnCircle() {
-  const circle = document.createElement("div");
-  circle.classList.add("circle");
+      const w = el.offsetWidth, h = el.offsetHeight;
+      let top, left, tries = 0, overlap;
 
-  const creatureObj = asciiCreatures[Math.floor(Math.random() * asciiCreatures.length)];
-  circle.textContent = creatureObj.art;
-  circle.classList.add(creatureObj.color);
+      do {
+        top  = Math.random() * (area.clientHeight - h);
+        left = Math.random() * (area.clientWidth  - w);
+        overlap = false;
+        area.querySelectorAll(".creature").forEach(other => {
+          if (other === el) return;
+          const ox = parseFloat(other.style.left), oy = parseFloat(other.style.top);
+          if (!(left + w < ox || left > ox + other.offsetWidth || top + h < oy || top > oy + other.offsetHeight))
+            overlap = true;
+        });
+      } while (overlap && ++tries < 50);
 
-  gameArea.appendChild(circle);
+      el.style.top  = top  + "px";
+      el.style.left = left + "px";
 
-  const circleWidth = circle.offsetWidth;
-  const circleHeight = circle.offsetHeight;
+      el.addEventListener("click", () => {
+        if (!running) return;
+        results.textContent = `Pops: ${++pops}`;
+        playSound(c.sound);
+        el.classList.add("pop");
+        setTimeout(() => el.remove(), 200);
+      });
 
-  let top, left;
-  let tries = 0;
-  let overlap;
-
-  do {
-    top = Math.random() * (gameArea.clientHeight - circleHeight);
-    left = Math.random() * (gameArea.clientWidth - circleWidth);
-
-    overlap = false;
-    const existingCircles = gameArea.querySelectorAll(".circle");
-    existingCircles.forEach(c => {
-      if (c === circle) return;
-      const rect1 = { x: left, y: top, w: circleWidth, h: circleHeight };
-      const rect2 = {
-        x: parseFloat(c.style.left),
-        y: parseFloat(c.style.top),
-        w: c.offsetWidth,
-        h: c.offsetHeight
-      };
-
-      if (!(rect1.x + rect1.w < rect2.x ||
-            rect1.x > rect2.x + rect2.w ||
-            rect1.y + rect1.h < rect2.y ||
-            rect1.y > rect2.y + rect2.h)) {
-        overlap = true;
-      }
-    });
-
-    tries++;
-    if (tries > 50) break;
-  } while (overlap);
-
-  circle.style.top = top + "px";
-  circle.style.left = left + "px";
-
-  circle.addEventListener("click", () => {
-    if (testRunning) {
-      popCount++;
-      results.textContent = `Pops: ${popCount}`;
-
-      // Play sound effect for this creature
-      playSound(creatureObj.sound);
-
-      // Pop animation
-      circle.classList.add("pop");
-      setTimeout(() => circle.remove(), 200);
+      setTimeout(() => { if (area.contains(el)) el.remove(); }, 6000);
     }
-  });
 
-  setTimeout(() => {
-    if (gameArea.contains(circle)) circle.remove();
-  }, 6000);
-}
+    function startGame() {
+      pops = 0; running = true;
+      results.textContent = "Pops: 0";
+      startBtn.style.display = "none";
+      stopBtn.style.display  = "inline-block";
+      spawnTimer = setInterval(() => { for (let i = 0; i < 3; i++) spawn(); }, 700);
+    }
 
-startBtn.addEventListener("click", startTest);
-stopBtn.addEventListener("click", endTest);
-</script>
+    function stopGame() {
+      clearInterval(spawnTimer);
+      running = false;
+      area.innerHTML = "";
+      results.textContent = `Done — ${pops} pops`;
+      startBtn.style.display = "inline-block";
+      stopBtn.style.display  = "none";
+    }
+
+    startBtn.addEventListener("click", startGame);
+    stopBtn.addEventListener("click", stopGame);
+  </script>
 </body>
 </html>
