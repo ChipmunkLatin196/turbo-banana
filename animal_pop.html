@@ -36,23 +36,24 @@
 
     .creature {
       position: absolute;
-      background: #fafafa;
+      background: #fff;
       border: 1px solid #e0e0e0;
-      border-radius: 6px;
-      padding: 4px 6px;
+      border-radius: 50%;
+      width: 96px;
+      height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 52px;
       cursor: pointer;
-      font-family: 'IBM Plex Mono', 'Courier New', monospace;
-      font-size: 13px;
-      white-space: pre;
-      line-height: 1;
       user-select: none;
       transition: transform 0.15s, opacity 0.15s;
     }
 
-    .creature:hover { border-color: #bbb; }
+    .creature:hover { transform: scale(1.1); border-color: #bbb; }
 
     .creature.pop {
-      transform: scale(0.6);
+      transform: scale(0.4);
       opacity: 0;
     }
 
@@ -100,14 +101,14 @@
     const stopBtn  = document.getElementById("stop-btn");
 
     const creatures = [
-      { art: `+-----------+\n|   /\\_/\\   |\n|  ( o.o )  |\n|   > ^ <   |\n+-----------+`, sound: "pop1.mp3" },
-      { art: `+-----------+\n|   ^__^    |\n|  (oo)     |\n|  (__)     |\n+-----------+`, sound: "pop2.mp3" },
-      { art: `+-----------+\n|   /\\_/\\   |\n|  ( -.- )  |\n|   zzz     |\n+-----------+`, sound: "pop3.mp3" },
-      { art: `+-----------+\n|   ()_()   |\n|   (o.o)   |\n|   > ^ <   |\n+-----------+`, sound: "pop4.mp3" },
-      { art: `+-----------+\n|    //     |\n|   (oo)    |\n|   /-/     |\n+-----------+`, sound: "pop5.mp3" },
-      { art: `+-----------+\n|   ^__^    |\n|  ('o')    |\n|  (   )    |\n+-----------+`, sound: "pop6.mp3" },
-      { art: `+-----------+\n|    ,~.    |\n|   (o,o)   |\n|   <) )╯   |\n+-----------+`, sound: "pop7.mp3" },
-      { art: `+-----------+\n|    >>\\\\   |\n|   (o o)   |\n|   /   \\   |\n+-----------+`, sound: "pop8.mp3" },
+      { art: "🐱", sound: "pop1.mp3" },
+      { art: "🐶", sound: "pop2.mp3" },
+      { art: "🐸", sound: "pop3.mp3" },
+      { art: "🐭", sound: "pop4.mp3" },
+      { art: "🐼", sound: "pop5.mp3" },
+      { art: "🦊", sound: "pop6.mp3" },
+      { art: "🐨", sound: "pop7.mp3" },
+      { art: "🐯", sound: "pop8.mp3" },
     ];
 
     let pops = 0, spawnTimer, running = false;
@@ -123,7 +124,7 @@
       el.textContent = c.art;
       area.appendChild(el);
 
-      const w = el.offsetWidth, h = el.offsetHeight;
+      const w = 96, h = 96;
       let top, left, tries = 0, overlap;
 
       do {
