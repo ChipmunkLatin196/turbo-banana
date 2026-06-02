@@ -2,59 +2,122 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Click Test</title>
+  <title>Click test</title>
   <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #fafafa;
+      color: #111;
+      font-family: 'Space Grotesk', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    #game-area {
+      position: relative;
+      width: 90vw;
+      max-width: 600px;
+      height: 60vh;
+      background: #fafafa;
+      border: 1px solid #ebebeb;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.1s;
+    }
+
+    #game-area:active { background: #f0f0f0; }
+
+    #counter {
+      font-size: 48px;
+      font-weight: 300;
+      color: #ebebeb;
+      pointer-events: none;
+      transition: color 0.1s;
+    }
+
+    #game-area.running #counter { color: #111; }
+
+    #results { font-size: 14px; color: #bbb; }
+
+    button {
+      background: #fafafa;
+      color: #111;
+      border: 1px solid #ebebeb;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      border-radius: 6px;
+      transition: border-color 0.2s;
+    }
+
+    button:hover { border-color: #bbb; }
+
+    #home {
+      font-size: 13px;
+      color: #bbb;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #home:hover { color: #111; }
+  </style>
 </head>
 <body>
-  <main>
-    <div id="instructions">Press "Start Test" then click inside the box as fast as you can!</div>
-    <div id="game-area"></div>
-    <div id="results">Clicks: 0 | Time left: 10s</div>
-    <button id="start-btn">Start Test</button>
+  <div id="game-area">
+    <span id="counter">0</span>
+  </div>
+  <div id="results">10 seconds, click as fast as you can</div>
+  <button id="start-btn">Start</button>
+  <a id="home" href="index.html">← back</a>
 
-    <div class="prompt-line">
-      <a class="prompt-text" href="index.html">$ cd ~</a>
-      <span class="prompt-cursor"></span>
-    </div>
-  </main>
   <script>
-    const gameArea = document.getElementById("game-area");
-    const results = document.getElementById("results");
+    const area     = document.getElementById("game-area");
+    const counter  = document.getElementById("counter");
+    const results  = document.getElementById("results");
     const startBtn = document.getElementById("start-btn");
-    const instructions = document.getElementById("instructions");
 
-    let clickCount = 0, timeLeft = 10, timerInterval, testRunning = false;
+    let clicks = 0, timeLeft = 10, timer, running = false;
 
     function startTest() {
-      clickCount = 0;
-      timeLeft = 10;
-      testRunning = true;
-
-      instructions.textContent = "Click as fast as you can!";
-      results.textContent = `Clicks: 0 | Time left: ${timeLeft}s`;
+      clicks = 0; timeLeft = 10; running = true;
+      counter.textContent = "0";
+      results.textContent = `${timeLeft}s`;
       startBtn.style.display = "none";
-
-      timerInterval = setInterval(() => {
+      area.classList.add("running");
+      timer = setInterval(() => {
         timeLeft--;
-        results.textContent = `Clicks: ${clickCount} | Time left: ${timeLeft}s`;
+        results.textContent = `${timeLeft}s`;
         if (timeLeft <= 0) endTest();
       }, 1000);
     }
 
     function endTest() {
-      clearInterval(timerInterval);
-      testRunning = false;
-      instructions.textContent = "Press Start Test then click inside the box!";
-      results.textContent = `Test finished! Total clicks: ${clickCount}`;
+      clearInterval(timer);
+      running = false;
+      area.classList.remove("running");
+      const cps = (clicks / 10).toFixed(1);
+      results.textContent = `${clicks} clicks — ${cps} per second`;
       startBtn.style.display = "inline-block";
     }
 
-    gameArea.addEventListener("click", () => {
-      if (testRunning) {
-        clickCount++;
-        results.textContent = `Clicks: ${clickCount} | Time left: ${timeLeft}s`;
-      }
+    area.addEventListener("click", () => {
+      if (!running) return;
+      counter.textContent = ++clicks;
     });
 
     startBtn.addEventListener("click", startTest);
