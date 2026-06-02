@@ -2,62 +2,136 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Scroll Test</title>
+  <title>Reaction test</title>
   <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #fafafa;
+      color: #111;
+      font-family: 'Space Grotesk', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    #box {
+      width: 90vw;
+      max-width: 600px;
+      height: 60vh;
+      border-radius: 8px;
+      border: 1px solid #ebebeb;
+      background: #fafafa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.1s;
+      user-select: none;
+    }
+
+    #box.waiting { background: #fafafa; }
+    #box.ready   { background: #111; }
+    #box.early   { background: #fee2e2; }
+
+    #label {
+      font-size: 16px;
+      color: #bbb;
+      pointer-events: none;
+      transition: color 0.1s;
+    }
+
+    #box.ready #label  { color: #fafafa; }
+    #box.early #label  { color: #ef4444; }
+
+    #results { font-size: 14px; color: #bbb; }
+
+    #home {
+      font-size: 13px;
+      color: #bbb;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #home:hover { color: #111; }
+  </style>
 </head>
 <body>
-  <main>
-    <div id="game-area">Press "Start Test"</div>
-    <div id="results">Spin your scroll wheel inside the box</div>
-    <button id="start-btn">Start Test</button>
+  <div id="box" class="waiting">
+    <span id="label">Click to start</span>
+  </div>
+  <div id="results"></div>
+  <a id="home" href="index.html">← back</a>
 
-    <div class="prompt-line">
-      <a class="prompt-text" href="index.html">$ cd ~</a>
-      <span class="prompt-cursor"></span>
-    </div>
-  </main>
   <script>
-    const gameArea = document.getElementById("game-area");
+    const box    = document.getElementById("box");
+    const label  = document.getElementById("label");
     const results = document.getElementById("results");
-    const startBtn = document.getElementById("start-btn");
 
-    let scrollCount = 0;
-    let timeLeft = 10;
-    let timerInterval;
-    let testRunning = false;
+    const ROUNDS = 5;
+    let state = "idle"; // idle | waiting | ready
+    let timeout, startTime, times = [];
 
-    function startTest() {
-      scrollCount = 0;
-      timeLeft = 10;
-      testRunning = true;
-
-      gameArea.textContent = "Scrolls: 0";
-      results.textContent = `Time left: ${timeLeft}s`;
-      startBtn.style.display = "none";
-
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        results.textContent = `Time left: ${timeLeft}s`;
-        if (timeLeft <= 0) endTest();
-      }, 1000);
+    function setState(s, text) {
+      state = s;
+      box.className = s === "ready" ? "ready" : s === "early" ? "early" : "waiting";
+      label.textContent = text;
     }
 
-    function endTest() {
-      clearInterval(timerInterval);
-      testRunning = false;
-      gameArea.textContent = `Final Scrolls: ${scrollCount}`;
-      results.textContent = `Your score: ${scrollCount} scrolls in 10 seconds`;
-      startBtn.style.display = "inline-block";
+    function startWait() {
+      setState("waiting", "Wait for black...");
+      const delay = 1500 + Math.random() * 3000;
+      timeout = setTimeout(() => {
+        startTime = Date.now();
+        setState("ready", "Click!");
+      }, delay);
     }
 
-    gameArea.addEventListener("wheel", (e) => {
-      if (!testRunning) return;
-      scrollCount++;
-      gameArea.textContent = `Scrolls: ${scrollCount}`;
+    function showResult(ms) {
+      times.push(ms);
+      if (times.length < ROUNDS) {
+        results.textContent = `Round ${times.length}/${ROUNDS} — ${ms} ms`;
+        startWait();
+      } else {
+        const avg = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
+        results.textContent = `Done — avg ${avg} ms over ${ROUNDS} rounds`;
+        setState("waiting", "Click to play again");
+        times = [];
+      }
+    }
+
+    box.addEventListener("click", () => {
+      if (state === "idle" || state === "waiting" && times.length === 0 && state !== "waiting") {
+        times = [];
+        startWait();
+      } else if (state === "waiting") {
+        clearTimeout(timeout);
+        setState("early", "Too early! Click to retry");
+        times = [];
+        results.textContent = "";
+      } else if (state === "ready") {
+        showResult(Date.now() - startTime);
+      } else if (state === "early" || box.className === "waiting") {
+        times = [];
+        results.textContent = "";
+        startWait();
+      }
     });
 
-    startBtn.addEventListener("click", startTest);
+    // init
+    setState("waiting", "Click to start");
+    box.addEventListener("click", function init() {
+      box.removeEventListener("click", init);
+      // handled by main listener
+    });
   </script>
 </body>
 </html>
