@@ -2,188 +2,207 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Maze Test</title>
+  <title>Maze</title>
   <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #fafafa;
+      color: #111;
+      font-family: 'Space Grotesk', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 16px;
+      padding: 20px;
+    }
+
+    #hud {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      font-size: 14px;
+      color: #bbb;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #hud strong { color: #111; font-weight: 500; }
+    #status { color: #111; }
+
+    button {
+      background: #fafafa;
+      color: #111;
+      border: 1px solid #ebebeb;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      border-radius: 6px;
+      transition: border-color 0.2s;
+    }
+
+    button:hover { border-color: #bbb; }
+
+    #maze-wrap {
+      border: 1px solid #ebebeb;
+      line-height: 0;
+      max-width: 100%;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+
+    #maze { display: block; max-width: 100%; }
+
+    #tip { font-size: 12px; color: #bbb; }
+
+    #home {
+      font-size: 13px;
+      color: #bbb;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    #home:hover { color: #111; }
+  </style>
 </head>
 <body>
-  <main>
-    <div id="hud">
-      <span id="status">Find the green exit!</span>
-      <span>Time: <strong id="time">0.0s</strong></span>
-      <span>Moves: <strong id="moves">0</strong></span>
-      <button id="restart">New maze</button>
-    </div>
-    <div id="maze-wrap">
-      <canvas id="maze" width="800" height="600"></canvas>
-    </div>
-    <div id="tip">Use arrow keys or WASD.</div>
+  <div id="hud">
+    <span id="status">Find the exit</span>
+    <span>Time: <strong id="time">0.0s</strong></span>
+    <span>Moves: <strong id="moves">0</strong></span>
+    <button id="restart">New maze</button>
+  </div>
+  <div id="maze-wrap">
+    <canvas id="maze"></canvas>
+  </div>
+  <div id="tip">Arrow keys or WASD to move</div>
+  <a id="home" href="index.html">← back</a>
 
-    <div class="prompt-line">
-      <a class="prompt-text" href="index.html">$ cd ~</a>
-      <span class="prompt-cursor"></span>
-    </div>
-  </main>
   <script>
-    const cols = 32, rows = 24, cellSize = 25;
-    const wallColor = "#00ff00", bgColor = "black", playerColor = "#de1212", exitColor = "#de1212";
-
+    const COLS = 32, ROWS = 24, CELL = 25;
     const canvas = document.getElementById("maze");
     const ctx = canvas.getContext("2d");
+    canvas.width = COLS * CELL;
+    canvas.height = ROWS * CELL;
 
     const statusEl = document.getElementById("status");
     const timeEl = document.getElementById("time");
     const movesEl = document.getElementById("moves");
-    const restartBtn = document.getElementById("restart");
 
-    let grid, player, exit, moves, startTime, timerId, gameOver = false;
+    let grid, player, exit_, moves, startTime, timerId, gameOver;
 
     function initGrid() {
-      grid = [];
-      for (let y = 0; y < rows; y++) {
-        const row = [];
-        for (let x = 0; x < cols; x++) {
-          row.push({ x, y, visited: false, walls: [true, true, true, true] });
-        }
-        grid.push(row);
-      }
+      grid = Array.from({ length: ROWS }, (_, y) =>
+        Array.from({ length: COLS }, (_, x) => ({ x, y, visited: false, walls: [true, true, true, true] }))
+      );
     }
 
-    function neighbors(cell) {
-      const { x, y } = cell;
-      const list = [];
-      if (y > 0) list.push(grid[y - 1][x]);
-      if (x < cols - 1) list.push(grid[y][x + 1]);
-      if (y < rows - 1) list.push(grid[y + 1][x]);
-      if (x > 0) list.push(grid[y][x - 1]);
-      return list.filter(n => !n.visited);
+    function unvisitedNeighbors({ x, y }) {
+      return [
+        y > 0        && grid[y-1][x],
+        x < COLS-1   && grid[y][x+1],
+        y < ROWS-1   && grid[y+1][x],
+        x > 0        && grid[y][x-1],
+      ].filter(n => n && !n.visited);
     }
 
     function generateMaze() {
-      const stack = [];
-      const start = grid[0][0];
-      start.visited = true;
-      stack.push(start);
-
-      while (stack.length > 0) {
-        const current = stack[stack.length - 1];
-        const unvisited = neighbors(current);
-
-        if (unvisited.length > 0) {
-          const next = unvisited[Math.floor(Math.random() * unvisited.length)];
-          const dx = next.x - current.x;
-          const dy = next.y - current.y;
-          if (dx === 1) { current.walls[1] = false; next.walls[3] = false; }
-          else if (dx === -1) { current.walls[3] = false; next.walls[1] = false; }
-          else if (dy === 1) { current.walls[2] = false; next.walls[0] = false; }
-          else if (dy === -1) { current.walls[0] = false; next.walls[2] = false; }
-          next.visited = true;
-          stack.push(next);
-        } else {
-          stack.pop();
-        }
+      const stack = [grid[0][0]];
+      grid[0][0].visited = true;
+      while (stack.length) {
+        const cur = stack[stack.length - 1];
+        const next = unvisitedNeighbors(cur);
+        if (!next.length) { stack.pop(); continue; }
+        const nb = next[Math.floor(Math.random() * next.length)];
+        const dx = nb.x - cur.x, dy = nb.y - cur.y;
+        if      (dx ===  1) { cur.walls[1] = false; nb.walls[3] = false; }
+        else if (dx === -1) { cur.walls[3] = false; nb.walls[1] = false; }
+        else if (dy ===  1) { cur.walls[2] = false; nb.walls[0] = false; }
+        else                { cur.walls[0] = false; nb.walls[2] = false; }
+        nb.visited = true;
+        stack.push(nb);
       }
     }
 
-    function drawMaze() {
-      ctx.fillStyle = bgColor;
+    function draw() {
+      ctx.fillStyle = "#fafafa";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = wallColor;
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#ddd";
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          const cell = grid[y][x];
-          const px = x * cellSize;
-          const py = y * cellSize;
-          if (cell.walls[0]) { ctx.moveTo(px, py); ctx.lineTo(px + cellSize, py); }
-          if (cell.walls[1]) { ctx.moveTo(px + cellSize, py); ctx.lineTo(px + cellSize, py + cellSize); }
-          if (cell.walls[2]) { ctx.moveTo(px + cellSize, py + cellSize); ctx.lineTo(px, py + cellSize); }
-          if (cell.walls[3]) { ctx.moveTo(px, py + cellSize); ctx.lineTo(px, py); }
+      for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+          const { walls } = grid[y][x];
+          const px = x * CELL, py = y * CELL;
+          if (walls[0]) { ctx.moveTo(px, py);           ctx.lineTo(px + CELL, py); }
+          if (walls[1]) { ctx.moveTo(px + CELL, py);    ctx.lineTo(px + CELL, py + CELL); }
+          if (walls[2]) { ctx.moveTo(px + CELL, py + CELL); ctx.lineTo(px, py + CELL); }
+          if (walls[3]) { ctx.moveTo(px, py + CELL);    ctx.lineTo(px, py); }
         }
       }
       ctx.stroke();
 
-      ctx.fillStyle = exitColor;
-      ctx.fillRect(exit.x * cellSize + 6, exit.y * cellSize + 6, cellSize - 12, cellSize - 12);
+      // exit
+      const ex = exit_.x * CELL, ey = exit_.y * CELL, pad = 6;
+      ctx.fillStyle = "#111";
+      ctx.fillRect(ex + pad, ey + pad, CELL - pad * 2, CELL - pad * 2);
 
-      ctx.fillStyle = playerColor;
+      // player
+      ctx.fillStyle = "#ff3333";
       ctx.beginPath();
-      ctx.arc(player.x * cellSize + cellSize / 2, player.y * cellSize + cellSize / 2, cellSize * 0.35, 0, Math.PI * 2);
+      ctx.arc(player.x * CELL + CELL / 2, player.y * CELL + CELL / 2, CELL * 0.35, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    function canMove(from, dir) {
-      if (from.walls[dir]) return false;
-      let nx = from.x, ny = from.y;
-      if (dir === 0) ny--; else if (dir === 1) nx++; else if (dir === 2) ny++; else nx--;
-      if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) return false;
-      return true;
-    }
-
-    function movePlayer(dir) {
+    function move(dir) {
       if (gameOver) return;
-      const cell = grid[player.y][player.x];
-      if (!canMove(cell, dir)) return;
-      if (dir === 0) player.y--; 
-      else if (dir === 1) player.x++; 
-      else if (dir === 2) player.y++; 
+      const { walls } = grid[player.y][player.x];
+      if (walls[dir]) return;
+      if (dir === 0) player.y--;
+      else if (dir === 1) player.x++;
+      else if (dir === 2) player.y++;
       else player.x--;
-      moves++; 
-      movesEl.textContent = moves;
-      drawMaze(); 
-      checkWin();
-    }
-
-    function checkWin() {
-      if (player.x === exit.x && player.y === exit.y) {
+      movesEl.textContent = ++moves;
+      draw();
+      if (player.x === exit_.x && player.y === exit_.y) {
         gameOver = true;
-        const elapsed = (performance.now() - startTime) / 1000;
-        statusEl.textContent = `Done! Time: ${elapsed.toFixed(1)}s, Moves: ${moves}`;
         clearInterval(timerId);
+        const t = ((performance.now() - startTime) / 1000).toFixed(1);
+        statusEl.textContent = `Done — ${t}s, ${moves} moves`;
       }
-    }
-
-    function startTimer() {
-      startTime = performance.now();
-      timerId = setInterval(() => {
-        const t = (performance.now() - startTime) / 1000;
-        timeEl.textContent = `${t.toFixed(1)}s`;
-      }, 100);
     }
 
     function newMaze() {
       clearInterval(timerId);
-      gameOver = false;
-      moves = 0;
+      gameOver = false; moves = 0;
       movesEl.textContent = "0";
       timeEl.textContent = "0.0s";
-      statusEl.textContent = "Find the green exit!";
-      initGrid(); 
-      generateMaze();
+      statusEl.textContent = "Find the exit";
+      initGrid(); generateMaze();
       player = { x: 0, y: 0 };
-      exit = { x: cols - 1, y: rows - 1 };
-      drawMaze(); 
-      startTimer();
+      exit_ = { x: COLS - 1, y: ROWS - 1 };
+      draw();
+      startTime = performance.now();
+      timerId = setInterval(() => {
+        timeEl.textContent = ((performance.now() - startTime) / 1000).toFixed(1) + "s";
+      }, 100);
     }
 
-    window.addEventListener("keydown", (e) => {
-      if (gameOver) return;
-
-      const k = e.key.toLowerCase();
-
-      if (["arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) e.preventDefault();
-
-      if (k === "arrowup" || k === "w") movePlayer(0);
-      else if (k === "arrowright" || k === "d") movePlayer(1);
-      else if (k === "arrowdown" || k === "s") movePlayer(2);
-      else if (k === "arrowleft" || k === "a") movePlayer(3);
+    const DIRS = { arrowup: 0, w: 0, arrowright: 1, d: 1, arrowdown: 2, s: 2, arrowleft: 3, a: 3 };
+    window.addEventListener("keydown", e => {
+      const dir = DIRS[e.key.toLowerCase()];
+      if (dir !== undefined) { e.preventDefault(); move(dir); }
     });
 
-    restartBtn.addEventListener("click", newMaze);
-
+    document.getElementById("restart").addEventListener("click", newMaze);
     newMaze();
   </script>
 </body>
