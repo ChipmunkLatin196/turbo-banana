@@ -2,21 +2,84 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Terminal Index</title>
+  <title>sinstolmoi</title>
   <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: #fafafa;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.05rem 0;
+      border-bottom: 1px solid #ebebeb;
+      text-decoration: none;
+    }
+
+    .card:first-child { border-top: 1px solid #ebebeb; }
+
+    .name {
+      font-size: 16px;
+      font-weight: 400;
+      color: #bbb;
+      transition: color 0.18s;
+    }
+
+    .arrow {
+      font-size: 14px;
+      color: #ddd;
+      transition: color 0.18s, transform 0.18s;
+    }
+
+    .card:hover .name { color: #111; }
+    .card:hover .arrow { color: #111; transform: translate(3px, -3px); }
+  </style>
 </head>
 <body>
-  <main class="index-main">
-    <div class="line">user@linux:~$ ./maze <a href="maze.html">run</a></div>
-    <div class="line">user@linux:~$ ./aim_test <a href="aim_test.html">run</a></div>
-    <div class="line">user@linux:~$ ./scroll_test <a href="scroll_test.html">run</a></div>
-    <div class="line">user@linux:~$ ./click_test <a href="click_test.html">run</a></div>
-    <div class="line">user@linux:~$ ./reaction_test <a href="reaction_test.html">run</a></div>
-    <div class="line">user@linux:~$ ./animal_pop <a href="animal_pop.html">run</a></div>
-
-    <!-- terminal prompt with cursor -->
-    <div class="line">user@linux:~$ <span class="cursor blink"></span></div>
-  </main>
+  <div class="wrap">
+    <div class="list">
+      <a class="card" href="maze.html">
+        <span class="name">Maze</span><span class="arrow">↗</span>
+      </a>
+      <a class="card" href="aim_test.html">
+        <span class="name">Aim test</span><span class="arrow">↗</span>
+      </a>
+      <a class="card" href="reaction_test.html">
+        <span class="name">Reaction test</span><span class="arrow">↗</span>
+      </a>
+      <a class="card" href="click_test.html">
+        <span class="name">Click test</span><span class="arrow">↗</span>
+      </a>
+      <a class="card" href="scroll_test.html">
+        <span class="name">Scroll test</span><span class="arrow">↗</span>
+      </a>
+      <a class="card" href="animal_pop.html">
+        <span class="name">Animal pop</span><span class="arrow">↗</span>
+      </a>
+    </div>
+  </div>
 </body>
 </html>
