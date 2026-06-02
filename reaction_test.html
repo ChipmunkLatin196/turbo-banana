@@ -49,8 +49,8 @@
       transition: color 0.1s;
     }
 
-    #box.ready #label  { color: #fafafa; }
-    #box.early #label  { color: #ef4444; }
+    #box.ready #label { color: #fafafa; }
+    #box.early #label { color: #ef4444; }
 
     #results { font-size: 14px; color: #bbb; }
 
@@ -72,12 +72,12 @@
   <a id="home" href="index.html">← back</a>
 
   <script>
-    const box    = document.getElementById("box");
-    const label  = document.getElementById("label");
+    const box     = document.getElementById("box");
+    const label   = document.getElementById("label");
     const results = document.getElementById("results");
 
     const ROUNDS = 5;
-    let state = "idle"; // idle | waiting | ready
+    let state = "start"; // start | waiting | ready | early
     let timeout, startTime, times = [];
 
     function setState(s, text) {
@@ -90,7 +90,7 @@
       setState("waiting", "Wait for black...");
       const delay = 1500 + Math.random() * 3000;
       timeout = setTimeout(() => {
-        startTime = Date.now();
+        startTime = performance.now();
         setState("ready", "Click!");
       }, delay);
     }
@@ -103,34 +103,26 @@
       } else {
         const avg = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
         results.textContent = `Done — avg ${avg} ms over ${ROUNDS} rounds`;
-        setState("waiting", "Click to play again");
+        setState("start", "Click to play again");
         times = [];
       }
     }
 
     box.addEventListener("click", () => {
-      if (state === "idle" || state === "waiting" && times.length === 0 && state !== "waiting") {
+      if (state === "start") {
         times = [];
+        results.textContent = "";
         startWait();
       } else if (state === "waiting") {
+        // Too early — just retry this round, don't reset progress
         clearTimeout(timeout);
-        setState("early", "Too early! Click to retry");
-        times = [];
-        results.textContent = "";
+        setState("early", "Too early! Click to try again");
       } else if (state === "ready") {
-        showResult(Date.now() - startTime);
-      } else if (state === "early" || box.className === "waiting") {
-        times = [];
-        results.textContent = "";
+        const ms = Math.round(performance.now() - startTime);
+        showResult(ms);
+      } else if (state === "early") {
         startWait();
       }
-    });
-
-    // init
-    setState("waiting", "Click to start");
-    box.addEventListener("click", function init() {
-      box.removeEventListener("click", init);
-      // handled by main listener
     });
   </script>
 </body>
