@@ -750,7 +750,7 @@ function end() {
   running = false; gameOver = true;
   cancelAnimationFrame(rafId);
   draw(1);
-  document.getElementById("go-score").textContent = `Score: ${score}`;
+  document.getElementById("go-score").textContent = "";
   document.getElementById("go-hint").textContent =
     mode === "levels" ? `Level ${LEVELS[currentLevel].id} — ${LEVELS[currentLevel].name}` : "Classic mode";
   showOverlay("gameover-screen");
