@@ -57,6 +57,7 @@ body {
   max-height: 340px;
   background: #f0ede6;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -64,6 +65,7 @@ body {
   border-bottom: 1.5px solid #000;
   -webkit-tap-highlight-color: transparent;
   transition: background 0.06s;
+  gap: 0.25rem;
 }
 
 #game-area.running:active { background: #e8e5de; }
@@ -75,9 +77,21 @@ body {
   pointer-events: none;
   transition: color 0.1s;
   letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 #game-area.running #counter { color: #000; }
+
+#prompt {
+  font-size: 11px;
+  color: #e0ddd6;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  pointer-events: none;
+  transition: opacity 0.1s;
+}
+
+#game-area.running #prompt { opacity: 0; }
 
 .game-footer {
   display: flex;
@@ -131,12 +145,10 @@ button:active { background: #000; color: #f0ede6; }
   </div>
   <div id="game-area">
     <span id="counter">0</span>
+    <span id="prompt">click to start</span>
   </div>
   <div class="game-footer">
     <a id="home" href="index.html">← back</a>
-    <div class="actions">
-      <button id="start-btn">Start</button>
-    </div>
   </div>
 </div>
 
@@ -144,14 +156,13 @@ button:active { background: #000; color: #f0ede6; }
 const area = document.getElementById("game-area");
 const counter = document.getElementById("counter");
 const results = document.getElementById("results");
-const startBtn = document.getElementById("start-btn");
+const prompt = document.getElementById("prompt");
 let clicks = 0, timeLeft = 10, timer, running = false;
 
 function startTest() {
   clicks = 0; timeLeft = 10; running = true;
   counter.textContent = "0";
   results.textContent = `${timeLeft}s`;
-  startBtn.style.display = "none";
   area.classList.add("running");
   timer = setInterval(() => {
     timeLeft--;
@@ -166,15 +177,13 @@ function endTest() {
   area.classList.remove("running");
   const cps = (clicks / 10).toFixed(1);
   results.textContent = `${clicks} clicks — ${cps}/s`;
-  startBtn.style.display = "inline-block";
+  counter.textContent = clicks;
 }
 
 area.addEventListener("click", () => {
-  if (!running) return;
+  if (!running) { startTest(); return; }
   counter.textContent = ++clicks;
 });
-
-startBtn.addEventListener("click", startTest);
 </script>
 </body>
 </html>
