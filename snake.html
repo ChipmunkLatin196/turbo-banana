@@ -857,7 +857,24 @@ function applyDir(d) {
   if (d==="DOWN"  && effective.y !== -1) nd = {x:0,  y:1};
   if (d==="LEFT"  && effective.x !== 1)  nd = {x:-1, y:0};
   if (d==="RIGHT" && effective.x !== -1) nd = {x:1,  y:0};
-  if (nd && inputQueue.length < 2) inputQueue.push(nd);
+  if (!nd) return;
+
+  // if queue is empty, fire an early tick immediately so turn feels instant
+  if (inputQueue.length === 0) {
+    const now = performance.now();
+    const elapsed = now - lastTick;
+    const interval = getInterval();
+    // only fire early if at least half the interval has passed (avoids double-steps)
+    if (elapsed > interval * 0.5) {
+      inputQueue.push(nd);
+      lastTick = now;
+      tick();
+      if (running) draw(0);
+      return;
+    }
+  }
+
+  if (inputQueue.length < 2) inputQueue.push(nd);
 }
 
 window.addEventListener("keydown", e => {
