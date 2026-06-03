@@ -477,9 +477,9 @@ let mode = "classic"; // "classic" | "levels"
 let currentLevel = 0; // index into LEVELS
 let walls = [];
 let snake, dir, nextDir, food, score, best = { classic: 0, levels: {} };
-let running = false, gameOver = false, started = false;
+let running = false, gameOver = false, started = false, paused = false;
 let lastTick = 0, progress = 0, prevSnake = [];
-let rafId, foodEaten = 0;
+let rafId, foodEaten = 0, inputQueue = [];
 
 const SPEEDS = [
   { threshold: 0,  interval: 160 },
@@ -529,6 +529,20 @@ function isWall(x, y) {
   return walls.some(w => w.x === x && w.y === y);
 }
 
+function safeStart() {
+  // find a starting position not overlapping walls
+  const candidates = [
+    { x: Math.floor(COLS/2), y: Math.floor(ROWS/2) },
+    { x: 4, y: 4 }, { x: 4, y: ROWS-5 },
+    { x: COLS-5, y: 4 }, { x: COLS-5, y: ROWS-5 },
+  ];
+  for (const c of candidates) {
+    const segs = [c, {x:c.x-1,y:c.y}, {x:c.x-2,y:c.y}];
+    if (segs.every(s => !isWall(s.x, s.y))) return segs;
+  }
+  return [{ x: 2, y: 2 }, { x: 1, y: 2 }, { x: 0, y: 2 }];
+}
+
 function randomFood(snakeArr) {
   let pos, tries = 0;
   do {
@@ -541,20 +555,39 @@ function randomFood(snakeArr) {
   return pos;
 }
 
+// safe roundRect fallback
+function drawRoundRect(x, y, w, h, r) {
+  if (ctx.roundRect) {
+    ctx.beginPath(); ctx.roundRect(x, y, w, h, r);
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, y+h-r); ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+    ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+    ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y);
+    ctx.closePath();
+  }
+}
+
 // ── INIT ────────────────────────────────────────────────────────
 function init() {
   walls = mode === "levels" ? LEVELS[currentLevel].walls : [];
-  const mid = { x: Math.floor(COLS / 2), y: Math.floor(ROWS / 2) };
-  snake = [mid, { x: mid.x - 1, y: mid.y }, { x: mid.x - 2, y: mid.y }];
+  const segs = safeStart();
+  snake = segs;
   prevSnake = snake.map(s => ({ ...s }));
   dir = { x: 1, y: 0 };
   nextDir = { x: 1, y: 0 };
+  inputQueue = [];
   score = 0; foodEaten = 0;
   scoreEl.textContent = "0";
   food = randomFood(snake);
   running = false; gameOver = false; started = false;
-  progress = 0;
+  progress = 0; paused = false;
   cancelAnimationFrame(rafId);
+
+  // update best display for current mode/level
+  updateBestDisplay();
 
   // header
   const hudMode = document.getElementById("hud-mode-label");
@@ -562,6 +595,14 @@ function init() {
   hudMode.style.display = mode === "levels" ? "inline" : "none";
 
   draw(0);
+}
+
+function updateBestDisplay() {
+  if (mode === "classic") {
+    bestEl.textContent = best.classic;
+  } else {
+    bestEl.textContent = best.levels[currentLevel] || 0;
+  }
 }
 
 // ── DRAW ────────────────────────────────────────────────────────
@@ -593,8 +634,7 @@ function draw(t) {
   // food — small rounded square
   ctx.fillStyle = FOOD_COLOR;
   const fp = 5;
-  ctx.beginPath();
-  ctx.roundRect(food.x*CELL+fp, food.y*CELL+fp, CELL-fp*2, CELL-fp*2, 2);
+  drawRoundRect(food.x*CELL+fp, food.y*CELL+fp, CELL-fp*2, CELL-fp*2, 2);
   ctx.fill();
 
   if (snake.length === 0) return;
@@ -671,6 +711,10 @@ function draw(t) {
 
 // ── TICK ────────────────────────────────────────────────────────
 function tick() {
+  // drain one input from queue
+  if (inputQueue.length > 0) {
+    nextDir = inputQueue.shift();
+  }
   dir = { ...nextDir };
   const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
 
@@ -689,9 +733,10 @@ function tick() {
     if (mode === "classic") {
       if (score > best.classic) { best.classic = score; bestEl.textContent = score; }
     } else {
-      const lvKey = currentLevel;
-      if (!best.levels[lvKey] || score > best.levels[lvKey]) best.levels[lvKey] = score;
-      bestEl.textContent = best.levels[lvKey];
+      if (!best.levels[currentLevel] || score > best.levels[currentLevel]) {
+        best.levels[currentLevel] = score;
+        bestEl.textContent = score;
+      }
     }
 
     // level complete check
@@ -710,6 +755,7 @@ function tick() {
 function loop(now) {
   if (!running) return;
   rafId = requestAnimationFrame(loop);
+  if (paused) { lastTick = now; return; } // drift-free pause
   const delta = now - lastTick;
   const interval = getInterval();
   progress = Math.min(delta / interval, 1);
@@ -739,8 +785,11 @@ function showMenu() {
 }
 
 function startGame() {
+  cancelAnimationFrame(rafId);
   init();
-  running = true; started = true;
+  running = true;
+  started = true;
+  paused = false;
   lastTick = performance.now();
   overlay.classList.add("hidden");
   rafId = requestAnimationFrame(loop);
@@ -755,6 +804,12 @@ function end() {
     mode === "levels" ? `Level ${LEVELS[currentLevel].id} — ${LEVELS[currentLevel].name}` : "Classic mode";
   showOverlay("gameover-screen");
 }
+
+// ── PAUSE ON BLUR ────────────────────────────────────────────────
+document.addEventListener("visibilitychange", () => {
+  if (!running) return;
+  paused = document.hidden;
+});
 
 function levelComplete() {
   running = false;
@@ -795,10 +850,14 @@ const KEY_MAP = {
 };
 
 function applyDir(d) {
-  if (d==="UP"    && dir.y!==1)  nextDir={x:0,y:-1};
-  if (d==="DOWN"  && dir.y!==-1) nextDir={x:0,y:1};
-  if (d==="LEFT"  && dir.x!==1)  nextDir={x:-1,y:0};
-  if (d==="RIGHT" && dir.x!==-1) nextDir={x:1,y:0};
+  // get the effective current direction (last queued or actual)
+  const effective = inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : dir;
+  let nd = null;
+  if (d==="UP"    && effective.y !== 1)  nd = {x:0,  y:-1};
+  if (d==="DOWN"  && effective.y !== -1) nd = {x:0,  y:1};
+  if (d==="LEFT"  && effective.x !== 1)  nd = {x:-1, y:0};
+  if (d==="RIGHT" && effective.x !== -1) nd = {x:1,  y:0};
+  if (nd && inputQueue.length < 2) inputQueue.push(nd);
 }
 
 window.addEventListener("keydown", e => {
