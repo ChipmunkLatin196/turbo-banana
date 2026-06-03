@@ -145,14 +145,14 @@ let times = [], startTime, hit = 0, lastX = -1, lastY = -1;
 function spawnTarget() {
   gameArea.innerHTML = "";
   if (hit >= TOTAL) return endRound();
-  const areaW = gameArea.clientWidth || 480;
-  const areaH = gameArea.clientHeight || 300;
-  let left, top, tries = 0;
+  const areaW = gameArea.offsetWidth || 480;
+  const areaH = gameArea.offsetHeight || 300;
+  let left, top, dx, dy, tries = 0;
   do {
-    left = Math.random() * (areaW - SIZE);
-    top = Math.random() * (areaH - SIZE);
-    const dx = (left + SIZE / 2) - lastX;
-    const dy = (top + SIZE / 2) - lastY;
+    left = Math.random() * Math.max(0, areaW - SIZE);
+    top = Math.random() * Math.max(0, areaH - SIZE);
+    dx = (left + SIZE / 2) - lastX;
+    dy = (top + SIZE / 2) - lastY;
     tries++;
   } while (Math.sqrt(dx*dx + dy*dy) < MIN_DIST && tries < 50);
   lastX = left + SIZE / 2;
