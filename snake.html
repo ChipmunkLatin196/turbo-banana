@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snake</title>
+<link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Mono', monospace;
+  background: #f0ede6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
+
+#home {
+  position: fixed;
+  top: 1rem;
+  left: 1.25rem;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9C9C9C;
+  text-decoration: none;
+  transition: color 0.12s;
+  z-index: 10;
+}
+#home:hover { color: #000; }
+
+.wrap {
+  width: 100%;
+  max-width: 480px;
+  border: 3px solid #000;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1.5px solid #000;
+}
+
+.game-title {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9C9C9C;
+}
+
+.hud {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 11px;
+  color: #9C9C9C;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.hud strong { color: #000; font-weight: 500; }
+
+#canvas-wrap {
+  position: relative;
+  width: 100%;
+  line-height: 0;
+  border-bottom: 1.5px solid #000;
+  background: #f0ede6;
+  overflow: hidden;
+}
+
+canvas { display: block; width: 100%; }
+
+/* OVERLAY */
+#overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: #f0ede6;
+  transition: opacity 0.2s;
+}
+#overlay.hidden { opacity: 0; pointer-events: none; }
+
+/* MODE SELECT screen */
+#mode-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+}
+
+#overlay-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(52px, 14vw, 80px);
+  color: #e0ddd6;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  margin-bottom: 1.2rem;
+}
+
+.mode-btns {
+  display: flex;
+  width: 80%;
+  gap: 0;
+  border: 1.5px solid #000;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 0.7rem 0;
+  background: #f0ede6;
+  border: none;
+  border-right: 1.5px solid #000;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.mode-btn:last-child { border-right: none; }
+@media (hover: hover) {
+  .mode-btn:hover { background: #000; color: #f0ede6; }
+}
+.mode-btn:active { background: #000; color: #f0ede6; }
+.mode-btn.selected { background: #000; color: #f0ede6; }
+
+/* LEVEL SELECT */
+#level-select {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+#level-select-title {
+  font-size: 10px;
+  color: #9C9C9C;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+}
+
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  width: 80%;
+  border: 1.5px solid #000;
+}
+
+.level-btn {
+  padding: 0.65rem 0;
+  background: #f0ede6;
+  border: none;
+  border-right: 1.5px solid #000;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+}
+.level-btn:last-child { border-right: none; }
+@media (hover: hover) {
+  .level-btn:hover { background: #000; color: #f0ede6; }
+}
+.level-btn:active { background: #000; color: #f0ede6; }
+.level-btn.selected { background: #000; color: #f0ede6; }
+
+.start-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.8rem;
+}
+
+/* GAMEOVER screen */
+#gameover-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+#go-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(52px, 14vw, 80px);
+  color: #e0ddd6;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+#go-score {
+  font-size: 11px;
+  color: #9C9C9C;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#go-hint {
+  font-size: 10px;
+  color: #c0bdb6;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 0.15rem;
+  margin-bottom: 0.6rem;
+}
+.go-btns {
+  display: flex;
+  gap: 0;
+  border: 1.5px solid #000;
+}
+.go-btn {
+  padding: 0.5rem 1.1rem;
+  background: #f0ede6;
+  border: none;
+  border-right: 1.5px solid #000;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.go-btn:last-child { border-right: none; }
+@media (hover: hover) {
+  .go-btn:hover { background: #000; color: #f0ede6; }
+}
+.go-btn:active { background: #000; color: #f0ede6; }
+
+/* level complete */
+#levelup-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+#lu-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(40px, 10vw, 64px);
+  color: #e0ddd6;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+#lu-sub {
+  font-size: 10px;
+  color: #9C9C9C;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* footer */
+.game-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+}
+.tip {
+  font-size: 10px;
+  color: #9C9C9C;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+button {
+  background: #f0ede6;
+  color: #000;
+  border: 1.5px solid #000;
+  padding: 0.45rem 1rem;
+  font-size: 10px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) {
+  button:hover { background: #000; color: #f0ede6; }
+}
+button:active { background: #000; color: #f0ede6; }
+
+/* dpad */
+#swipe-btns {
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 2px;
+  padding: 0.5rem 1.25rem 0.75rem;
+  border-top: 1.5px solid #000;
+}
+@media (pointer: coarse) {
+  #swipe-btns { display: grid; }
+}
+.d-btn {
+  background: #f0ede6;
+  border: 1.5px solid #000;
+  padding: 0.6rem;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: center;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.d-btn:active { background: #000; color: #f0ede6; }
+.d-up    { grid-column: 2; grid-row: 1; }
+.d-left  { grid-column: 1; grid-row: 2; }
+.d-down  { grid-column: 2; grid-row: 2; }
+.d-right { grid-column: 3; grid-row: 2; }
+</style>
+</head>
+<body>
+
+<a id="home" href="index.html">← home</a>
+
+<div class="wrap">
+  <div class="game-header">
+    <span class="game-title" id="header-title">Snake</span>
+    <div class="hud">
+      <span id="hud-mode-label" style="display:none">Level <strong id="hud-level">1</strong></span>
+      <span>Score <strong id="score">0</strong></span>
+      <span>Best <strong id="best">0</strong></span>
+    </div>
+  </div>
+
+  <div id="canvas-wrap">
+    <canvas id="c"></canvas>
+
+    <div id="overlay">
+
+      <!-- Mode select -->
+      <div id="mode-select">
+        <div id="overlay-title">Snake</div>
+        <div class="mode-btns">
+          <button class="mode-btn selected" id="btn-classic">Classic</button>
+          <button class="mode-btn" id="btn-levels">Levels</button>
+        </div>
+        <div id="level-select">
+          <div id="level-select-title" style="margin-top:0.9rem">Select level</div>
+          <div class="level-grid" id="level-grid"></div>
+        </div>
+        <div class="start-row">
+          <button id="start-btn">Start</button>
+        </div>
+      </div>
+
+      <!-- Game over -->
+      <div id="gameover-screen">
+        <div id="go-title">Game over</div>
+        <div id="go-score"></div>
+        <div id="go-hint"></div>
+        <div class="go-btns">
+          <button class="go-btn" id="go-retry">Retry</button>
+          <button class="go-btn" id="go-menu">Menu</button>
+        </div>
+      </div>
+
+      <!-- Level complete -->
+      <div id="levelup-screen">
+        <div id="lu-title">Level up</div>
+        <div id="lu-sub"></div>
+        <div class="go-btns">
+          <button class="go-btn" id="lu-next">Next level</button>
+          <button class="go-btn" id="lu-menu">Menu</button>
+        </div>
+      </div>
+
+    </div><!-- /overlay -->
+  </div><!-- /canvas-wrap -->
+
+  <div class="game-footer">
+    <span class="tip" id="footer-tip">Arrows or WASD</span>
+    <button id="menu-btn">Menu</button>
+  </div>
+
+  <div id="swipe-btns">
+    <div class="d-btn d-up"    data-dir="UP">↑</div>
+    <div class="d-btn d-left"  data-dir="LEFT">←</div>
+    <div class="d-btn d-down"  data-dir="DOWN">↓</div>
+    <div class="d-btn d-right" data-dir="RIGHT">→</div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const scoreEl = document.getElementById("score");
+const bestEl  = document.getElementById("best");
+const overlay = document.getElementById("overlay");
+
+const COLS = 24, ROWS = 20, CELL = 20;
+canvas.width = COLS * CELL;
+canvas.height = ROWS * CELL;
+
+// ── LEVEL DEFINITIONS ──────────────────────────────────────────
+// walls: array of {x,y} grid cells. food_to_advance: how many food to clear level (levels mode only)
+const LEVELS = [
+  {
+    id: 1, name: "Open",
+    walls: [],
+    food_to_advance: 8
+  },
+  {
+    id: 2, name: "Pillars",
+    walls: [
+      {x:6,y:5},{x:6,y:6},{x:6,y:7},
+      {x:17,y:12},{x:17,y:13},{x:17,y:14},
+      {x:12,y:3},{x:12,y:4},
+      {x:11,y:15},{x:12,y:15},{x:13,y:15},
+    ],
+    food_to_advance: 12
+  },
+  {
+    id: 3, name: "Crevice",
+    walls: [
+      // top horizontal bar with gap
+      {x:4,y:4},{x:5,y:4},{x:6,y:4},{x:7,y:4},{x:8,y:4},{x:9,y:4},{x:10,y:4},
+      // gap at x:11
+      {x:12,y:4},{x:13,y:4},{x:14,y:4},{x:15,y:4},{x:16,y:4},{x:17,y:4},{x:18,y:4},
+      // bottom horizontal bar with gap
+      {x:4,y:15},{x:5,y:15},{x:6,y:15},{x:7,y:15},{x:8,y:15},{x:9,y:15},
+      // gap at x:10,11
+      {x:12,y:15},{x:13,y:15},{x:14,y:15},{x:15,y:15},{x:16,y:15},{x:17,y:15},{x:18,y:15},
+    ],
+    food_to_advance: 15
+  },
+  {
+    id: 4, name: "Corridors",
+    walls: [
+      // vertical dividers with narrow gaps
+      {x:8,y:1},{x:8,y:2},{x:8,y:3},{x:8,y:4},{x:8,y:5},{x:8,y:6},{x:8,y:7},{x:8,y:8},
+      // gap at y:9
+      {x:8,y:10},{x:8,y:11},{x:8,y:12},{x:8,y:13},{x:8,y:14},{x:8,y:15},{x:8,y:16},{x:8,y:17},{x:8,y:18},
+      {x:15,y:1},{x:15,y:2},{x:15,y:3},{x:15,y:4},{x:15,y:5},{x:15,y:6},{x:15,y:7},{x:15,y:8},{x:15,y:9},{x:15,y:10},
+      // gap at y:11,12
+      {x:15,y:13},{x:15,y:14},{x:15,y:15},{x:15,y:16},{x:15,y:17},{x:15,y:18},
+    ],
+    food_to_advance: 18
+  },
+  {
+    id: 5, name: "Maze",
+    walls: [
+      // outer inner frame partial
+      {x:3,y:3},{x:4,y:3},{x:5,y:3},{x:6,y:3},{x:7,y:3},{x:8,y:3},
+      {x:3,y:3},{x:3,y:4},{x:3,y:5},{x:3,y:6},{x:3,y:7},{x:3,y:8},{x:3,y:9},
+      {x:3,y:16},{x:4,y:16},{x:5,y:16},{x:6,y:16},{x:7,y:16},{x:8,y:16},
+      {x:20,y:3},{x:20,y:4},{x:20,y:5},{x:20,y:6},{x:20,y:7},{x:20,y:8},{x:20,y:9},
+      {x:20,y:10},{x:20,y:11},{x:20,y:12},{x:20,y:13},{x:20,y:14},{x:20,y:15},{x:20,y:16},
+      // inner walls
+      {x:7,y:7},{x:8,y:7},{x:9,y:7},{x:10,y:7},
+      {x:13,y:7},{x:14,y:7},{x:15,y:7},{x:16,y:7},
+      {x:10,y:12},{x:11,y:12},{x:12,y:12},{x:13,y:12},
+      {x:6,y:11},{x:6,y:12},{x:6,y:13},
+      {x:17,y:9},{x:17,y:10},{x:17,y:11},
+    ],
+    food_to_advance: 22
+  },
+];
+
+// ── STATE ───────────────────────────────────────────────────────
+let mode = "classic"; // "classic" | "levels"
+let currentLevel = 0; // index into LEVELS
+let walls = [];
+let snake, dir, nextDir, food, score, best = { classic: 0, levels: {} };
+let running = false, gameOver = false, started = false;
+let lastTick = 0, progress = 0, prevSnake = [];
+let rafId, foodEaten = 0;
+
+const SPEEDS = [
+  { threshold: 0,  interval: 160 },
+  { threshold: 5,  interval: 130 },
+  { threshold: 12, interval: 105 },
+  { threshold: 20, interval: 85  },
+  { threshold: 30, interval: 68  },
+];
+
+function getInterval() {
+  for (let i = SPEEDS.length - 1; i >= 0; i--)
+    if (score >= SPEEDS[i].threshold) return SPEEDS[i].interval;
+  return 160;
+}
+
+// ── LEVEL SELECT UI ─────────────────────────────────────────────
+const levelGrid = document.getElementById("level-grid");
+LEVELS.forEach((lv, i) => {
+  const btn = document.createElement("button");
+  btn.className = "level-btn" + (i === 0 ? " selected" : "");
+  btn.textContent = lv.id;
+  btn.dataset.idx = i;
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".level-btn").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
+    currentLevel = i;
+  });
+  levelGrid.appendChild(btn);
+});
+
+// mode toggle
+document.getElementById("btn-classic").addEventListener("click", () => {
+  mode = "classic";
+  document.getElementById("btn-classic").classList.add("selected");
+  document.getElementById("btn-levels").classList.remove("selected");
+  document.getElementById("level-select").style.display = "none";
+});
+document.getElementById("btn-levels").addEventListener("click", () => {
+  mode = "levels";
+  document.getElementById("btn-levels").classList.add("selected");
+  document.getElementById("btn-classic").classList.remove("selected");
+  document.getElementById("level-select").style.display = "flex";
+});
+
+// ── HELPERS ─────────────────────────────────────────────────────
+function isWall(x, y) {
+  return walls.some(w => w.x === x && w.y === y);
+}
+
+function randomFood(snakeArr) {
+  let pos, tries = 0;
+  do {
+    pos = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+    tries++;
+  } while (
+    (snakeArr.some(s => s.x === pos.x && s.y === pos.y) || isWall(pos.x, pos.y))
+    && tries < 500
+  );
+  return pos;
+}
+
+// ── INIT ────────────────────────────────────────────────────────
+function init() {
+  walls = mode === "levels" ? LEVELS[currentLevel].walls : [];
+  const mid = { x: Math.floor(COLS / 2), y: Math.floor(ROWS / 2) };
+  snake = [mid, { x: mid.x - 1, y: mid.y }, { x: mid.x - 2, y: mid.y }];
+  prevSnake = snake.map(s => ({ ...s }));
+  dir = { x: 1, y: 0 };
+  nextDir = { x: 1, y: 0 };
+  score = 0; foodEaten = 0;
+  scoreEl.textContent = "0";
+  food = randomFood(snake);
+  running = false; gameOver = false; started = false;
+  progress = 0;
+  cancelAnimationFrame(rafId);
+
+  // header
+  const hudMode = document.getElementById("hud-mode-label");
+  document.getElementById("hud-level").textContent = LEVELS[currentLevel].id;
+  hudMode.style.display = mode === "levels" ? "inline" : "none";
+
+  draw(0);
+}
+
+// ── DRAW ────────────────────────────────────────────────────────
+const SNAKE_COLOR  = "#8B2500";   // brick red body
+const SNAKE_DARK   = "#5C1800";   // darker shade for tail fade
+const SNAKE_HEAD   = "#A62D00";   // slightly lighter head
+const FOOD_COLOR   = "#000";
+
+function draw(t) {
+  ctx.fillStyle = "#f0ede6";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // grid
+  ctx.strokeStyle = "rgba(0,0,0,0.1)";
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  for (let x = 0; x <= COLS; x++) { ctx.moveTo(x*CELL,0); ctx.lineTo(x*CELL,canvas.height); }
+  for (let y = 0; y <= ROWS; y++) { ctx.moveTo(0,y*CELL); ctx.lineTo(canvas.width,y*CELL); }
+  ctx.stroke();
+
+  // walls
+  walls.forEach(w => {
+    ctx.fillStyle = "#000";
+    ctx.fillRect(w.x*CELL, w.y*CELL, CELL, CELL);
+    ctx.fillStyle = "rgba(255,255,255,0.07)";
+    ctx.fillRect(w.x*CELL+1, w.y*CELL+1, CELL-2, CELL-2);
+  });
+
+  // food — small rounded square
+  ctx.fillStyle = FOOD_COLOR;
+  const fp = 5;
+  ctx.beginPath();
+  ctx.roundRect(food.x*CELL+fp, food.y*CELL+fp, CELL-fp*2, CELL-fp*2, 2);
+  ctx.fill();
+
+  if (snake.length === 0) return;
+
+  // interpolated head
+  let headX = snake[0].x, headY = snake[0].y;
+  if (prevSnake[0] && running) {
+    headX = prevSnake[0].x + (snake[0].x - prevSnake[0].x) * t;
+    headY = prevSnake[0].y + (snake[0].y - prevSnake[0].y) * t;
+  }
+
+  const cx = x => x * CELL + CELL / 2;
+  const cy = y => y * CELL + CELL / 2;
+  const TW = CELL * 0.72; // tube width
+
+  // build point list: head (interpolated) + rest of body
+  const pts = [
+    { x: headX, y: headY },
+    ...snake.slice(1).map(s => ({ x: s.x, y: s.y }))
+  ];
+
+  // draw body as a thick stroked path (smooth tube)
+  // use multiple passes: one wide dark, one slightly narrower bright on top
+  const segments = pts.length;
+
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  // shadow pass — slightly wider, darker
+  ctx.beginPath();
+  ctx.moveTo(cx(pts[0].x), cy(pts[0].y));
+  for (let i = 1; i < segments; i++) {
+    ctx.lineTo(cx(pts[i].x), cy(pts[i].y));
+  }
+  ctx.strokeStyle = SNAKE_DARK;
+  ctx.lineWidth = TW + 3;
+  ctx.stroke();
+
+  // main body pass — gradient from head color to tail color
+  // draw segment by segment so we can fade the color
+  for (let i = 0; i < segments - 1; i++) {
+    const pct = i / (segments - 1);
+    // interpolate from SNAKE_COLOR to SNAKE_DARK
+    const r1 = 0x8B, g1 = 0x25, b1 = 0x00;
+    const r2 = 0x3A, g2 = 0x0E, b2 = 0x00;
+    const ri = Math.round(r1 + (r2 - r1) * pct);
+    const gi = Math.round(g1 + (g2 - g1) * pct);
+    const bi = Math.round(b1 + (b2 - b1) * pct);
+    ctx.beginPath();
+    ctx.moveTo(cx(pts[i].x), cy(pts[i].y));
+    ctx.lineTo(cx(pts[i+1].x), cy(pts[i+1].y));
+    ctx.strokeStyle = `rgb(${ri},${gi},${bi})`;
+    ctx.lineWidth = TW;
+    ctx.stroke();
+  }
+
+  // head circle on top
+  ctx.fillStyle = SNAKE_HEAD;
+  ctx.beginPath();
+  ctx.arc(cx(headX), cy(headY), TW / 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // eyes
+  const pd = dir.x !== 0 ? {x:0,y:1} : {x:1,y:0};
+  ctx.fillStyle = "#f0ede6";
+  for (const sign of [-1, 1]) {
+    const ex = cx(headX) + dir.x * 4.5 + pd.x * sign * 3.2;
+    const ey = cy(headY) + dir.y * 4.5 + pd.y * sign * 3.2;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 1.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// ── TICK ────────────────────────────────────────────────────────
+function tick() {
+  dir = { ...nextDir };
+  const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+  if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) return end();
+  if (snake.some(s => s.x === head.x && s.y === head.y)) return end();
+  if (isWall(head.x, head.y)) return end();
+
+  prevSnake = snake.map(s => ({ ...s }));
+  snake.unshift(head);
+
+  if (head.x === food.x && head.y === food.y) {
+    score++; foodEaten++;
+    scoreEl.textContent = score;
+
+    // update best
+    if (mode === "classic") {
+      if (score > best.classic) { best.classic = score; bestEl.textContent = score; }
+    } else {
+      const lvKey = currentLevel;
+      if (!best.levels[lvKey] || score > best.levels[lvKey]) best.levels[lvKey] = score;
+      bestEl.textContent = best.levels[lvKey];
+    }
+
+    // level complete check
+    if (mode === "levels" && foodEaten >= LEVELS[currentLevel].food_to_advance) {
+      return levelComplete();
+    }
+
+    food = randomFood(snake);
+  } else {
+    snake.pop();
+    if (prevSnake.length > snake.length) prevSnake.pop();
+  }
+}
+
+// ── LOOP ────────────────────────────────────────────────────────
+function loop(now) {
+  if (!running) return;
+  rafId = requestAnimationFrame(loop);
+  const delta = now - lastTick;
+  const interval = getInterval();
+  progress = Math.min(delta / interval, 1);
+  if (delta >= interval) {
+    lastTick = now - (delta % interval);
+    progress = 0;
+    tick();
+    if (!running) return;
+  }
+  draw(progress);
+}
+
+// ── SCREENS ─────────────────────────────────────────────────────
+function showOverlay(screenId) {
+  ["mode-select","gameover-screen","levelup-screen"].forEach(id => {
+    document.getElementById(id).style.display = "none";
+  });
+  document.getElementById(screenId).style.display = "flex";
+  overlay.classList.remove("hidden");
+}
+
+function showMenu() {
+  cancelAnimationFrame(rafId);
+  running = false;
+  init();
+  showOverlay("mode-select");
+}
+
+function startGame() {
+  init();
+  running = true; started = true;
+  lastTick = performance.now();
+  overlay.classList.add("hidden");
+  rafId = requestAnimationFrame(loop);
+}
+
+function end() {
+  running = false; gameOver = true;
+  cancelAnimationFrame(rafId);
+  draw(1);
+  document.getElementById("go-score").textContent = `Score: ${score}`;
+  document.getElementById("go-hint").textContent =
+    mode === "levels" ? `Level ${LEVELS[currentLevel].id} — ${LEVELS[currentLevel].name}` : "Classic mode";
+  showOverlay("gameover-screen");
+}
+
+function levelComplete() {
+  running = false;
+  cancelAnimationFrame(rafId);
+  draw(1);
+  const next = currentLevel + 1;
+  if (next < LEVELS.length) {
+    document.getElementById("lu-title").textContent = "Level up";
+    document.getElementById("lu-sub").textContent =
+      `Level ${LEVELS[currentLevel].id} cleared — entering ${LEVELS[next].name}`;
+    document.getElementById("lu-next").style.display = "inline-block";
+    document.getElementById("lu-next").onclick = () => {
+      currentLevel = next;
+      document.querySelectorAll(".level-btn").forEach((b,i) => b.classList.toggle("selected", i === currentLevel));
+      document.getElementById("hud-level").textContent = LEVELS[currentLevel].id;
+      startGame();
+    };
+  } else {
+    document.getElementById("lu-title").textContent = "You win";
+    document.getElementById("lu-sub").textContent = `All ${LEVELS.length} levels cleared!`;
+    document.getElementById("lu-next").style.display = "none";
+  }
+  showOverlay("levelup-screen");
+}
+
+// ── CONTROLS ────────────────────────────────────────────────────
+document.getElementById("start-btn").addEventListener("click", startGame);
+
+document.getElementById("go-retry").addEventListener("click", () => { startGame(); });
+document.getElementById("go-menu").addEventListener("click", showMenu);
+document.getElementById("lu-menu").addEventListener("click", showMenu);
+document.getElementById("menu-btn").addEventListener("click", showMenu);
+
+const KEY_MAP = {
+  ArrowUp:"UP", ArrowDown:"DOWN", ArrowLeft:"LEFT", ArrowRight:"RIGHT",
+  w:"UP", s:"DOWN", a:"LEFT", d:"RIGHT",
+  W:"UP", S:"DOWN", A:"LEFT", D:"RIGHT",
+};
+
+function applyDir(d) {
+  if (d==="UP"    && dir.y!==1)  nextDir={x:0,y:-1};
+  if (d==="DOWN"  && dir.y!==-1) nextDir={x:0,y:1};
+  if (d==="LEFT"  && dir.x!==1)  nextDir={x:-1,y:0};
+  if (d==="RIGHT" && dir.x!==-1) nextDir={x:1,y:0};
+}
+
+window.addEventListener("keydown", e => {
+  const d = KEY_MAP[e.key];
+  if (!d) return;
+  e.preventDefault();
+  if (!started || gameOver) return;
+  applyDir(d);
+});
+
+document.querySelectorAll(".d-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (!started || gameOver) return;
+    applyDir(btn.dataset.dir);
+  });
+});
+
+let tx=0, ty=0;
+canvas.addEventListener("touchstart", e => { tx=e.touches[0].clientX; ty=e.touches[0].clientY; e.preventDefault(); }, {passive:false});
+canvas.addEventListener("touchend", e => {
+  const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+  if (Math.abs(dx)<10 && Math.abs(dy)<10) return;
+  if (!started || gameOver) return;
+  if (Math.abs(dx)>Math.abs(dy)) applyDir(dx>0?"RIGHT":"LEFT");
+  else applyDir(dy>0?"DOWN":"UP");
+  e.preventDefault();
+}, {passive:false});
+
+// ── BOOT ────────────────────────────────────────────────────────
+document.fonts.ready.then(() => {
+  init();
+  showOverlay("mode-select");
+});
+</script>
+</body>
+</html>
