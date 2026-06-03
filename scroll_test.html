@@ -154,13 +154,14 @@ const counter = document.getElementById("counter");
 const results = document.getElementById("results");
 const DURATION = 10000;
 const MIN_DELTA = 30;
-let scrolls = 0, running = false, timer, startTime;
+let scrolls = 0, running = false, ready = true, timer, startTime;
 
 function startTest() {
-  if (running) return;
+  if (running || !ready) return;
   scrolls = 0; running = true;
   counter.textContent = "0";
   area.classList.add("running");
+  document.body.style.overflow = "hidden";
   startTime = performance.now();
   timer = setInterval(() => {
     const elapsed = performance.now() - startTime;
@@ -173,10 +174,13 @@ function startTest() {
 function endTest() {
   clearInterval(timer);
   running = false;
+  ready = false;
   area.classList.remove("running");
+  document.body.style.overflow = "";
   const elapsed = (performance.now() - startTime) / 1000;
   const sps = (scrolls / elapsed).toFixed(1);
   results.textContent = `${scrolls} scrolls — ${sps}/s`;
+  setTimeout(() => { ready = true; }, 1500);
 }
 
 area.addEventListener("wheel", e => {
@@ -184,6 +188,11 @@ area.addEventListener("wheel", e => {
   if (!running) { startTest(); return; }
   if (Math.abs(e.deltaY) < MIN_DELTA) return;
   counter.textContent = ++scrolls;
+}, { passive: false });
+
+// Block the whole page from scrolling while game is running
+window.addEventListener("wheel", e => {
+  if (running) e.preventDefault();
 }, { passive: false });
 
 let touchStartY = 0;
