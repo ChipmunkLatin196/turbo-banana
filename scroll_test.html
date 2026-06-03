@@ -130,6 +130,41 @@ button:active { background: #000; color: #f0ede6; }
   transition: color 0.12s;
 }
 #home:hover { color: #000; }
+
+#attempts {
+  border-top: 1.5px solid #000;
+}
+
+.attempt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1.25rem;
+  border-bottom: 1.5px solid #000;
+  font-size: 11px;
+}
+
+.attempt-row:last-child { border-bottom: none; }
+
+.attempt-num {
+  font-size: 10px;
+  color: #9C9C9C;
+  letter-spacing: 0.08em;
+  min-width: 18px;
+}
+
+.attempt-score {
+  color: #000;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.attempt-best {
+  font-size: 10px;
+  color: #9C9C9C;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 </style>
 </head>
 <body>
@@ -146,15 +181,31 @@ button:active { background: #000; color: #f0ede6; }
   <div class="game-footer">
     <a id="home" href="index.html">← back</a>
   </div>
+  <div id="attempts"></div>
 </div>
 
 <script>
 const area = document.getElementById("game-area");
 const counter = document.getElementById("counter");
 const results = document.getElementById("results");
+const attemptsEl = document.getElementById("attempts");
 const DURATION = 10000;
 const MIN_DELTA = 30;
+const MAX_ATTEMPTS = 5;
 let scrolls = 0, running = false, ready = true, timer, startTime;
+let attempts = [];
+
+function renderAttempts() {
+  if (!attempts.length) { attemptsEl.innerHTML = ""; return; }
+  const best = Math.max(...attempts.map(a => a.scrolls));
+  attemptsEl.innerHTML = attempts.map((a, i) => `
+    <div class="attempt-row">
+      <span class="attempt-num">${String(i + 1).padStart(2, '0')}</span>
+      <span class="attempt-score">${a.scrolls} scrolls — ${a.sps}/s</span>
+      <span class="attempt-best">${a.scrolls === best ? 'best' : ''}</span>
+    </div>
+  `).join("");
+}
 
 function startTest() {
   if (running || !ready) return;
@@ -180,6 +231,9 @@ function endTest() {
   const elapsed = (performance.now() - startTime) / 1000;
   const sps = (scrolls / elapsed).toFixed(1);
   results.textContent = `${scrolls} scrolls — ${sps}/s`;
+  attempts.unshift({ scrolls, sps });
+  if (attempts.length > MAX_ATTEMPTS) attempts.pop();
+  renderAttempts();
   setTimeout(() => { ready = true; }, 1500);
 }
 
