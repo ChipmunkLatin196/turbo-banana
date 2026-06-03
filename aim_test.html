@@ -109,26 +109,29 @@ button {
 button:active { background: #000; color: #f0ede6; }
 
 #home {
+  position: fixed;
+  top: 1rem;
+  left: 1.25rem;
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #9C9C9C;
   text-decoration: none;
   transition: color 0.12s;
+  z-index: 10;
 }
 #home:hover { color: #000; }
 </style>
 </head>
 <body>
 
+<a id="home" href="index.html">← home</a>
 <div class="wrap">
   <div class="game-header">
-    <span class="game-title">Aim test</span>
     <span id="results">Press start — 10 targets</span>
   </div>
   <div id="game-area"></div>
   <div class="game-footer">
-    <a id="home" href="index.html">← back</a>
     <div class="actions">
       <button id="start-btn">Start</button>
     </div>

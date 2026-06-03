@@ -123,12 +123,16 @@ button:active {
 }
 
 #home {
+  position: fixed;
+  top: 1rem;
+  left: 1.25rem;
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #9C9C9C;
   text-decoration: none;
   transition: color 0.12s;
+  z-index: 10;
 }
 
 #home:hover { color: #000; }
@@ -136,9 +140,9 @@ button:active {
 </head>
 <body>
 
+<a id="home" href="index.html">← home</a>
 <div class="wrap">
   <div class="game-header">
-    <span class="game-title">Maze</span>
     <div class="hud">
       <span id="status">Find the exit</span>
       <span>Time: <strong id="time">0.0s</strong></span>
@@ -151,7 +155,6 @@ button:active {
   <div class="game-footer">
     <span class="tip">Arrows or WASD</span>
     <div class="actions">
-      <a id="home" href="index.html">← back</a>
       <button id="restart">New maze</button>
     </div>
   </div>
