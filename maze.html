@@ -1,246 +1,329 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Maze</title>
-  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maze</title>
+<link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      background: #fafafa;
-      color: #111;
-      font-family: 'Space Grotesk', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      gap: 16px;
-      padding: 20px;
-    }
+body {
+  font-family: 'DM Mono', monospace;
+  background: #f0ede6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 2rem 1.25rem;
+}
 
-    #hud {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-      font-size: 14px;
-      color: #bbb;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
+.wrap {
+  width: 100%;
+  max-width: 480px;
+  border: 3px solid #000;
+}
 
-    #hud strong { color: #111; font-weight: 500; }
-    #status { color: #111; }
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1.5px solid #000;
+}
 
-    button {
-      background: #fafafa;
-      color: #111;
-      border: 1px solid #ebebeb;
-      padding: 6px 14px;
-      font-size: 13px;
-      cursor: pointer;
-      font-family: inherit;
-      border-radius: 6px;
-      transition: border-color 0.2s;
-    }
+.game-title {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9C9C9C;
+}
 
-    button:hover { border-color: #bbb; }
+.hud {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  font-size: 11px;
+  color: #9C9C9C;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 
-    #maze-wrap {
-      border: 1px solid #ebebeb;
-      line-height: 0;
-      max-width: 100%;
-      overflow: hidden;
-      border-radius: 8px;
-    }
+.hud strong {
+  color: #000;
+  font-weight: 500;
+}
 
-    #maze { display: block; max-width: 100%; }
+#status {
+  color: #000;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 
-    #tip { font-size: 12px; color: #bbb; }
+.maze-area {
+  border-bottom: 1.5px solid #000;
+  line-height: 0;
+  overflow: hidden;
+  background: #f0ede6;
+}
 
-    #home {
-      font-size: 13px;
-      color: #bbb;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
+#maze { display: block; max-width: 100%; }
 
-    #home:hover { color: #111; }
-  </style>
+.game-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-top: 0;
+}
+
+.tip {
+  font-size: 10px;
+  color: #9C9C9C;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+button {
+  background: #f0ede6;
+  color: #000;
+  border: 1.5px solid #000;
+  padding: 0.45rem 1rem;
+  font-size: 10px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  button:hover {
+    background: #000;
+    color: #f0ede6;
+  }
+}
+
+button:active {
+  background: #000;
+  color: #f0ede6;
+}
+
+#home {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9C9C9C;
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+#home:hover { color: #000; }
+</style>
 </head>
 <body>
-  <div id="hud">
-    <span id="status">Find the exit</span>
-    <span>Time: <strong id="time">0.0s</strong></span>
-    <span>Moves: <strong id="moves">0</strong></span>
-    <button id="restart">New maze</button>
+
+<div class="wrap">
+  <div class="game-header">
+    <span class="game-title">Maze</span>
+    <div class="hud">
+      <span id="status">Find the exit</span>
+      <span>Time: <strong id="time">0.0s</strong></span>
+      <span>Moves: <strong id="moves">0</strong></span>
+    </div>
   </div>
-  <div id="maze-wrap">
+  <div class="maze-area">
     <canvas id="maze"></canvas>
   </div>
-  <div id="tip">Arrow keys or WASD to move</div>
-  <a id="home" href="index.html">← back</a>
+  <div class="game-footer">
+    <span class="tip">Arrows or WASD</span>
+    <div class="actions">
+      <a id="home" href="index.html">← back</a>
+      <button id="restart">New maze</button>
+    </div>
+  </div>
+</div>
 
-  <script>
-    const COLS = 32, ROWS = 24, CELL = 25;
-    const canvas = document.getElementById("maze");
-    const ctx = canvas.getContext("2d");
-    canvas.width = COLS * CELL;
-    canvas.height = ROWS * CELL;
+<script>
+const COLS = 32, ROWS = 24, CELL = 15;
+const canvas = document.getElementById("maze");
+const ctx = canvas.getContext("2d");
 
-    const statusEl = document.getElementById("status");
-    const timeEl = document.getElementById("time");
-    const movesEl = document.getElementById("moves");
+function resize() {
+  const wrap = canvas.closest('.wrap');
+  const maxW = wrap.clientWidth;
+  const scale = Math.min(1, maxW / (COLS * CELL));
+  canvas.style.width = (COLS * CELL * scale) + 'px';
+  canvas.style.height = (ROWS * CELL * scale) + 'px';
+}
 
-    let grid, player, exit_, moves, startTime, timerId, gameOver;
+canvas.width = COLS * CELL;
+canvas.height = ROWS * CELL;
 
-    function initGrid() {
-      grid = Array.from({ length: ROWS }, (_, y) =>
-        Array.from({ length: COLS }, (_, x) => ({ x, y, visited: false, walls: [true, true, true, true] }))
-      );
+const statusEl = document.getElementById("status");
+const timeEl = document.getElementById("time");
+const movesEl = document.getElementById("moves");
+let grid, player, exit_, moves, startTime, timerId, gameOver;
+
+function initGrid() {
+  grid = Array.from({ length: ROWS }, (_, y) =>
+    Array.from({ length: COLS }, (_, x) => ({ x, y, visited: false, walls: [true, true, true, true] }))
+  );
+}
+
+function unvisitedNeighbors({ x, y }) {
+  return [
+    y > 0 && grid[y-1][x],
+    x < COLS-1 && grid[y][x+1],
+    y < ROWS-1 && grid[y+1][x],
+    x > 0 && grid[y][x-1],
+  ].filter(n => n && !n.visited);
+}
+
+function generateMaze() {
+  const stack = [grid[0][0]];
+  grid[0][0].visited = true;
+  while (stack.length) {
+    const cur = stack[stack.length - 1];
+    const next = unvisitedNeighbors(cur);
+    if (!next.length) { stack.pop(); continue; }
+    const nb = next[Math.floor(Math.random() * next.length)];
+    const dx = nb.x - cur.x, dy = nb.y - cur.y;
+    if (dx === 1) { cur.walls[1] = false; nb.walls[3] = false; }
+    else if (dx === -1) { cur.walls[3] = false; nb.walls[1] = false; }
+    else if (dy === 1) { cur.walls[2] = false; nb.walls[0] = false; }
+    else { cur.walls[0] = false; nb.walls[2] = false; }
+    nb.visited = true;
+    stack.push(nb);
+  }
+}
+
+function draw() {
+  ctx.fillStyle = "#f0ede6";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      const { walls } = grid[y][x];
+      const px = x * CELL, py = y * CELL;
+      if (walls[0]) { ctx.moveTo(px, py); ctx.lineTo(px + CELL, py); }
+      if (walls[1]) { ctx.moveTo(px + CELL, py); ctx.lineTo(px + CELL, py + CELL); }
+      if (walls[2]) { ctx.moveTo(px + CELL, py + CELL); ctx.lineTo(px, py + CELL); }
+      if (walls[3]) { ctx.moveTo(px, py + CELL); ctx.lineTo(px, py); }
     }
+  }
+  ctx.stroke();
 
-    function unvisitedNeighbors({ x, y }) {
-      return [
-        y > 0        && grid[y-1][x],
-        x < COLS-1   && grid[y][x+1],
-        y < ROWS-1   && grid[y+1][x],
-        x > 0        && grid[y][x-1],
-      ].filter(n => n && !n.visited);
-    }
+  // exit
+  const ex = exit_.x * CELL, ey = exit_.y * CELL, pad = 3;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(ex + pad, ey + pad, CELL - pad * 2, CELL - pad * 2);
 
-    function generateMaze() {
-      const stack = [grid[0][0]];
-      grid[0][0].visited = true;
-      while (stack.length) {
-        const cur = stack[stack.length - 1];
-        const next = unvisitedNeighbors(cur);
-        if (!next.length) { stack.pop(); continue; }
-        const nb = next[Math.floor(Math.random() * next.length)];
-        const dx = nb.x - cur.x, dy = nb.y - cur.y;
-        if      (dx ===  1) { cur.walls[1] = false; nb.walls[3] = false; }
-        else if (dx === -1) { cur.walls[3] = false; nb.walls[1] = false; }
-        else if (dy ===  1) { cur.walls[2] = false; nb.walls[0] = false; }
-        else                { cur.walls[0] = false; nb.walls[2] = false; }
-        nb.visited = true;
-        stack.push(nb);
-      }
-    }
+  // player
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.arc(player.x * CELL + CELL / 2, player.y * CELL + CELL / 2, CELL * 0.32, 0, Math.PI * 2);
+  ctx.fill();
 
-    function draw() {
-      ctx.fillStyle = "#fafafa";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // player dot highlight
+  ctx.fillStyle = "#f0ede6";
+  ctx.beginPath();
+  ctx.arc(player.x * CELL + CELL / 2 - 1, player.y * CELL + CELL / 2 - 1, CELL * 0.1, 0, Math.PI * 2);
+  ctx.fill();
+}
 
-      ctx.strokeStyle = "#ddd";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      for (let y = 0; y < ROWS; y++) {
-        for (let x = 0; x < COLS; x++) {
-          const { walls } = grid[y][x];
-          const px = x * CELL, py = y * CELL;
-          if (walls[0]) { ctx.moveTo(px, py);           ctx.lineTo(px + CELL, py); }
-          if (walls[1]) { ctx.moveTo(px + CELL, py);    ctx.lineTo(px + CELL, py + CELL); }
-          if (walls[2]) { ctx.moveTo(px + CELL, py + CELL); ctx.lineTo(px, py + CELL); }
-          if (walls[3]) { ctx.moveTo(px, py + CELL);    ctx.lineTo(px, py); }
-        }
-      }
-      ctx.stroke();
+function move(dir) {
+  if (gameOver) return;
+  const { walls } = grid[player.y][player.x];
+  if (walls[dir]) return;
+  if (dir === 0) player.y--;
+  else if (dir === 1) player.x++;
+  else if (dir === 2) player.y++;
+  else player.x--;
+  movesEl.textContent = ++moves;
+  draw();
+  if (player.x === exit_.x && player.y === exit_.y && !gameOver) {
+    gameOver = true;
+    clearInterval(timerId);
+    const t = ((performance.now() - startTime) / 1000).toFixed(1);
+    statusEl.textContent = `Done — ${t}s, ${moves} moves`;
+  }
+}
 
-      // exit
-      const ex = exit_.x * CELL, ey = exit_.y * CELL, pad = 6;
-      ctx.fillStyle = "#111";
-      ctx.fillRect(ex + pad, ey + pad, CELL - pad * 2, CELL - pad * 2);
+function newMaze() {
+  clearInterval(timerId);
+  gameOver = false; moves = 0;
+  movesEl.textContent = "0";
+  timeEl.textContent = "0.0s";
+  statusEl.textContent = "Find the exit";
+  initGrid(); generateMaze();
+  player = { x: 0, y: 0 };
+  exit_ = { x: COLS - 1, y: ROWS - 1 };
+  draw();
+  startTime = performance.now();
+  timerId = setInterval(() => {
+    timeEl.textContent = ((performance.now() - startTime) / 1000).toFixed(1) + "s";
+  }, 100);
+}
 
-      // player
-      ctx.fillStyle = "#ff3333";
-      ctx.beginPath();
-      ctx.arc(player.x * CELL + CELL / 2, player.y * CELL + CELL / 2, CELL * 0.35, 0, Math.PI * 2);
-      ctx.fill();
-    }
+const DIRS = { arrowup: 0, w: 0, arrowright: 1, d: 1, arrowdown: 2, s: 2, arrowleft: 3, a: 3 };
 
-    function move(dir) {
-      if (gameOver) return;
-      const { walls } = grid[player.y][player.x];
-      if (walls[dir]) return;
-      if      (dir === 0) player.y--;
-      else if (dir === 1) player.x++;
-      else if (dir === 2) player.y++;
-      else                player.x--;
-      movesEl.textContent = ++moves;
-      draw();
-      if (player.x === exit_.x && player.y === exit_.y && !gameOver) {
-        gameOver = true;
-        clearInterval(timerId);
-        const t = ((performance.now() - startTime) / 1000).toFixed(1);
-        statusEl.textContent = `Done — ${t}s, ${moves} moves`;
-      }
-    }
+window.addEventListener("keydown", e => {
+  if (["arrowup","arrowdown","arrowleft","arrowright"].includes(e.key.toLowerCase())) e.preventDefault();
+  const dir = DIRS[e.key.toLowerCase()];
+  if (dir !== undefined) move(dir);
+});
 
-    function newMaze() {
-      clearInterval(timerId);
-      gameOver = false; moves = 0;
-      movesEl.textContent = "0";
-      timeEl.textContent = "0.0s";
-      statusEl.textContent = "Find the exit";
-      initGrid(); generateMaze();
-      player = { x: 0, y: 0 };
-      exit_ = { x: COLS - 1, y: ROWS - 1 };
-      draw();
-      startTime = performance.now();
-      timerId = setInterval(() => {
-        timeEl.textContent = ((performance.now() - startTime) / 1000).toFixed(1) + "s";
-      }, 100);
-    }
+let touchStartX, touchStartY;
+canvas.addEventListener("touchstart", e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  e.preventDefault();
+}, { passive: false });
 
-    const DIRS = { arrowup: 0, w: 0, arrowright: 1, d: 1, arrowdown: 2, s: 2, arrowleft: 3, a: 3 };
+canvas.addEventListener("touchend", e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+  if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : 3);
+  else move(dy > 0 ? 2 : 0);
+  e.preventDefault();
+}, { passive: false });
 
-    // Prevent arrow keys scrolling the page at all times
-    window.addEventListener("keydown", e => {
-      if (["arrowup","arrowdown","arrowleft","arrowright"].includes(e.key.toLowerCase())) e.preventDefault();
-      const dir = DIRS[e.key.toLowerCase()];
-      if (dir !== undefined) move(dir);
-    });
+let pausedAt = null;
+document.addEventListener("visibilitychange", () => {
+  if (gameOver) return;
+  if (document.hidden) {
+    clearInterval(timerId);
+    pausedAt = performance.now();
+  } else {
+    startTime += performance.now() - pausedAt;
+    pausedAt = null;
+    timerId = setInterval(() => {
+      timeEl.textContent = ((performance.now() - startTime) / 1000).toFixed(1) + "s";
+    }, 100);
+  }
+});
 
-    // Touch / mobile swipe support
-    let touchStartX, touchStartY;
-    canvas.addEventListener("touchstart", e => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      e.preventDefault();
-    }, { passive: false });
-    canvas.addEventListener("touchend", e => {
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-      if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : 3);
-      else move(dy > 0 ? 2 : 0);
-      e.preventDefault();
-    }, { passive: false });
+document.getElementById("restart").addEventListener("click", newMaze);
 
-    // Pause timer when tab is hidden, resume when visible
-    let pausedAt = null;
-    document.addEventListener("visibilitychange", () => {
-      if (gameOver) return;
-      if (document.hidden) {
-        clearInterval(timerId);
-        pausedAt = performance.now();
-      } else {
-        startTime += performance.now() - pausedAt;
-        pausedAt = null;
-        timerId = setInterval(() => {
-          timeEl.textContent = ((performance.now() - startTime) / 1000).toFixed(1) + "s";
-        }, 100);
-      }
-    });
-
-    document.getElementById("restart").addEventListener("click", newMaze);
-
-    // Start only after fonts and layout are ready
-    document.fonts.ready.then(() => newMaze());
-  </script>
+document.fonts.ready.then(() => { resize(); newMaze(); });
+window.addEventListener("resize", resize);
+</script>
 </body>
 </html>

@@ -1,129 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Reaction test</title>
-  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reaction test</title>
+<link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      background: #fafafa;
-      color: #111;
-      font-family: 'Space Grotesk', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      gap: 16px;
-      padding: 20px;
-    }
+body {
+  font-family: 'DM Mono', monospace;
+  background: #f0ede6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
 
-    #box {
-      width: 90vw;
-      max-width: 600px;
-      height: 60vh;
-      border-radius: 8px;
-      border: 1px solid #ebebeb;
-      background: #fafafa;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.1s;
-      user-select: none;
-    }
+.wrap {
+  width: 100%;
+  max-width: 480px;
+  border: 3px solid #000;
+}
 
-    #box.waiting { background: #fafafa; }
-    #box.ready   { background: #111; }
-    #box.early   { background: #fee2e2; }
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1.5px solid #000;
+}
 
-    #label {
-      font-size: 16px;
-      color: #bbb;
-      pointer-events: none;
-      transition: color 0.1s;
-    }
+.game-title {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9C9C9C;
+}
 
-    #box.ready #label { color: #fafafa; }
-    #box.early #label { color: #ef4444; }
+#results {
+  font-size: 11px;
+  color: #9C9C9C;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 
-    #results { font-size: 14px; color: #bbb; }
+#box {
+  width: 100%;
+  height: 60vw;
+  max-height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.1s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  border-bottom: 1.5px solid #000;
+  background: #f0ede6;
+}
 
-    #home {
-      font-size: 13px;
-      color: #bbb;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
+#box.ready { background: #000; }
+#box.early { background: #f0ede6; border: none; outline: 2px solid #000; }
 
-    #home:hover { color: #111; }
-  </style>
+#label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9C9C9C;
+  pointer-events: none;
+  transition: color 0.1s;
+}
+
+#box.ready #label { color: #f0ede6; }
+#box.early #label { color: #000; }
+
+.game-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+}
+
+#home {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9C9C9C;
+  text-decoration: none;
+  transition: color 0.12s;
+}
+#home:hover { color: #000; }
+</style>
 </head>
 <body>
+
+<div class="wrap">
+  <div class="game-header">
+    <span class="game-title">Reaction test</span>
+    <span id="results"></span>
+  </div>
   <div id="box" class="waiting">
     <span id="label">Click to start</span>
   </div>
-  <div id="results"></div>
-  <a id="home" href="index.html">← back</a>
+  <div class="game-footer">
+    <a id="home" href="index.html">← back</a>
+    <span style="font-size:10px;color:#9C9C9C;letter-spacing:0.06em;text-transform:uppercase;">5 rounds</span>
+  </div>
+</div>
 
-  <script>
-    const box     = document.getElementById("box");
-    const label   = document.getElementById("label");
-    const results = document.getElementById("results");
+<script>
+const box = document.getElementById("box");
+const label = document.getElementById("label");
+const results = document.getElementById("results");
+const ROUNDS = 5;
+let state = "start";
+let timeout, startTime, times = [];
 
-    const ROUNDS = 5;
-    let state = "start"; // start | waiting | ready | early
-    let timeout, startTime, times = [];
+function setState(s, text) {
+  state = s;
+  box.className = s === "ready" ? "ready" : s === "early" ? "early" : "waiting";
+  label.textContent = text;
+}
 
-    function setState(s, text) {
-      state = s;
-      box.className = s === "ready" ? "ready" : s === "early" ? "early" : "waiting";
-      label.textContent = text;
-    }
+function startWait() {
+  setState("waiting", "Wait for black...");
+  const delay = 1500 + Math.random() * 3000;
+  timeout = setTimeout(() => {
+    startTime = performance.now();
+    setState("ready", "Click!");
+  }, delay);
+}
 
-    function startWait() {
-      setState("waiting", "Wait for black...");
-      const delay = 1500 + Math.random() * 3000;
-      timeout = setTimeout(() => {
-        startTime = performance.now();
-        setState("ready", "Click!");
-      }, delay);
-    }
+function showResult(ms) {
+  times.push(ms);
+  if (times.length < ROUNDS) {
+    results.textContent = `Round ${times.length}/${ROUNDS} — ${ms} ms`;
+    startWait();
+  } else {
+    const avg = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
+    results.textContent = `Done — avg ${avg} ms`;
+    setState("start", "Click to play again");
+    times = [];
+  }
+}
 
-    function showResult(ms) {
-      times.push(ms);
-      if (times.length < ROUNDS) {
-        results.textContent = `Round ${times.length}/${ROUNDS} — ${ms} ms`;
-        startWait();
-      } else {
-        const avg = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
-        results.textContent = `Done — avg ${avg} ms over ${ROUNDS} rounds`;
-        setState("start", "Click to play again");
-        times = [];
-      }
-    }
-
-    box.addEventListener("click", () => {
-      if (state === "start") {
-        times = [];
-        results.textContent = "";
-        startWait();
-      } else if (state === "waiting") {
-        // Too early — just retry this round, don't reset progress
-        clearTimeout(timeout);
-        setState("early", "Too early! Click to try again");
-      } else if (state === "ready") {
-        const ms = Math.round(performance.now() - startTime);
-        showResult(ms);
-      } else if (state === "early") {
-        startWait();
-      }
-    });
-  </script>
+box.addEventListener("click", () => {
+  if (state === "start") {
+    times = [];
+    results.textContent = "";
+    startWait();
+  } else if (state === "waiting") {
+    clearTimeout(timeout);
+    setState("early", "Too early — click to retry");
+  } else if (state === "ready") {
+    const ms = Math.round(performance.now() - startTime);
+    showResult(ms);
+  } else if (state === "early") {
+    startWait();
+  }
+});
+</script>
 </body>
 </html>

@@ -1,147 +1,199 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Scroll test</title>
-  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scroll test</title>
+<link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      background: #fafafa;
-      color: #111;
-      font-family: 'Space Grotesk', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      gap: 16px;
-      padding: 20px;
-    }
+body {
+  font-family: 'DM Mono', monospace;
+  background: #f0ede6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
 
-    #game-area {
-      width: 90vw;
-      max-width: 600px;
-      height: 60vh;
-      background: #fafafa;
-      border: 1px solid #ebebeb;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      overflow: hidden;
-    }
+.wrap {
+  width: 100%;
+  max-width: 480px;
+  border: 3px solid #000;
+}
 
-    #counter {
-      font-size: 48px;
-      font-weight: 300;
-      color: #ebebeb;
-      pointer-events: none;
-      transition: color 0.1s;
-    }
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1.5px solid #000;
+}
 
-    #game-area.running #counter { color: #111; }
-    #results { font-size: 14px; color: #bbb; }
+.game-title {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9C9C9C;
+}
 
-    button {
-      background: #fafafa;
-      color: #111;
-      border: 1px solid #ebebeb;
-      padding: 6px 14px;
-      font-size: 13px;
-      cursor: pointer;
-      font-family: inherit;
-      border-radius: 6px;
-      transition: border-color 0.2s;
-    }
+#results {
+  font-size: 11px;
+  color: #9C9C9C;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
 
-    button:hover { border-color: #bbb; }
+#game-area {
+  width: 100%;
+  height: 60vw;
+  max-height: 340px;
+  background: #f0ede6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  overflow: hidden;
+  border-bottom: 1.5px solid #000;
+  touch-action: none;
+}
 
-    #home {
-      font-size: 13px;
-      color: #bbb;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
+#counter {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(80px, 20vw, 120px);
+  color: #e0ddd6;
+  pointer-events: none;
+  transition: color 0.1s;
+  letter-spacing: 0.02em;
+}
 
-    #home:hover { color: #111; }
-  </style>
+#game-area.running #counter { color: #000; }
+
+.game-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+button {
+  background: #f0ede6;
+  color: #000;
+  border: 1.5px solid #000;
+  padding: 0.45rem 1rem;
+  font-size: 10px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  button:hover { background: #000; color: #f0ede6; }
+}
+button:active { background: #000; color: #f0ede6; }
+
+#home {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9C9C9C;
+  text-decoration: none;
+  transition: color 0.12s;
+}
+#home:hover { color: #000; }
+</style>
 </head>
 <body>
+
+<div class="wrap">
+  <div class="game-header">
+    <span class="game-title">Scroll test</span>
+    <span id="results">10 seconds, scroll fast</span>
+  </div>
   <div id="game-area">
     <span id="counter">0</span>
   </div>
-  <div id="results">10 seconds, scroll as fast as you can</div>
-  <button id="start-btn">Start</button>
-  <a id="home" href="index.html">← back</a>
+  <div class="game-footer">
+    <a id="home" href="index.html">← back</a>
+    <div class="actions">
+      <button id="start-btn">Start</button>
+    </div>
+  </div>
+</div>
 
-  <script>
-    const area     = document.getElementById("game-area");
-    const counter  = document.getElementById("counter");
-    const results  = document.getElementById("results");
-    const startBtn = document.getElementById("start-btn");
+<script>
+const area = document.getElementById("game-area");
+const counter = document.getElementById("counter");
+const results = document.getElementById("results");
+const startBtn = document.getElementById("start-btn");
+const DURATION = 10000;
+const MIN_DELTA = 30;
+let scrolls = 0, running = false, timer, startTime;
 
-    const DURATION = 10000; // ms
-    const MIN_DELTA = 30;   // minimum wheel delta to count as one scroll
-    let scrolls = 0, running = false, timer, startTime;
-    let lastScrollTime = 0;
+function startTest() {
+  if (running) return;
+  scrolls = 0; running = true;
+  counter.textContent = "0";
+  startBtn.style.display = "none";
+  area.classList.add("running");
+  startTime = performance.now();
+  timer = setInterval(() => {
+    const elapsed = performance.now() - startTime;
+    const left = Math.ceil((DURATION - elapsed) / 1000);
+    results.textContent = `${Math.max(0, left)}s`;
+    if (elapsed >= DURATION) endTest();
+  }, 100);
+}
 
-    function startTest() {
-      if (running) return;
-      scrolls = 0; running = true;
-      counter.textContent = "0";
-      startBtn.style.display = "none";
-      area.classList.add("running");
-      startTime = performance.now();
+function endTest() {
+  clearInterval(timer);
+  running = false;
+  area.classList.remove("running");
+  const elapsed = (performance.now() - startTime) / 1000;
+  const sps = (scrolls / elapsed).toFixed(1);
+  results.textContent = `${scrolls} scrolls — ${sps}/s`;
+  startBtn.style.display = "inline-block";
+}
 
-      timer = setInterval(() => {
-        const elapsed = performance.now() - startTime;
-        const left = Math.ceil((DURATION - elapsed) / 1000);
-        results.textContent = `${Math.max(0, left)}s`;
-        if (elapsed >= DURATION) endTest();
-      }, 100);
-    }
+area.addEventListener("wheel", e => {
+  e.preventDefault();
+  if (!running) return;
+  if (Math.abs(e.deltaY) < MIN_DELTA) return;
+  counter.textContent = ++scrolls;
+}, { passive: false });
 
-    function endTest() {
-      clearInterval(timer);
-      running = false;
-      area.classList.remove("running");
-      const elapsed = (performance.now() - startTime) / 1000;
-      const sps = (scrolls / elapsed).toFixed(1);
-      results.textContent = `${scrolls} scrolls — ${sps} per second`;
-      startBtn.style.display = "inline-block";
-    }
+let touchStartY = 0;
+area.addEventListener("touchstart", e => {
+  touchStartY = e.touches[0].clientY;
+  e.preventDefault();
+}, { passive: false });
 
-    // Wheel: require minimum delta to filter trackpad micro-events
-    area.addEventListener("wheel", e => {
-      e.preventDefault();
-      if (!running) return;
-      if (Math.abs(e.deltaY) < MIN_DELTA) return;
-      counter.textContent = ++scrolls;
-    }, { passive: false });
+area.addEventListener("touchmove", e => {
+  if (!running) return;
+  const dy = touchStartY - e.touches[0].clientY;
+  if (Math.abs(dy) > 20) {
+    counter.textContent = ++scrolls;
+    touchStartY = e.touches[0].clientY;
+  }
+  e.preventDefault();
+}, { passive: false });
 
-    // Touch swipe support
-    let touchStartY = 0;
-    area.addEventListener("touchstart", e => {
-      touchStartY = e.touches[0].clientY;
-      e.preventDefault();
-    }, { passive: false });
-    area.addEventListener("touchmove", e => {
-      if (!running) return;
-      const dy = touchStartY - e.touches[0].clientY;
-      if (Math.abs(dy) > 20) {
-        counter.textContent = ++scrolls;
-        touchStartY = e.touches[0].clientY;
-      }
-      e.preventDefault();
-    }, { passive: false });
-
-    startBtn.addEventListener("click", startTest);
-  </script>
+startBtn.addEventListener("click", startTest);
+</script>
 </body>
 </html>
