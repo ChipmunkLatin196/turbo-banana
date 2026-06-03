@@ -136,9 +136,9 @@ button:active { background: #000; color: #f0ede6; }
 }
 
 .attempt-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 24px 1fr 36px;
   align-items: center;
-  justify-content: space-between;
   padding: 0.7rem 1.25rem;
   border-bottom: 1.5px solid #000;
   font-size: 11px;
@@ -150,13 +150,13 @@ button:active { background: #000; color: #f0ede6; }
   font-size: 10px;
   color: #9C9C9C;
   letter-spacing: 0.08em;
-  min-width: 18px;
 }
 
 .attempt-score {
   color: #000;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .attempt-best {
@@ -164,6 +164,7 @@ button:active { background: #000; color: #f0ede6; }
   color: #9C9C9C;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  text-align: right;
 }
 </style>
 </head>
