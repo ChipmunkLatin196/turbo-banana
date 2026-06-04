@@ -1,142 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>sinstolmoi</title>
-  <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    ::selection {
-      color: #000;
-      background: #b5b0a6;
-    }
-
-    body {
-      font-family: 'DM Mono', monospace;
-      background: #f0ede6;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem 1.25rem;
-    }
-
-    .wrap {
-      width: 100%;
-      max-width: 480px;
-      border: 3px solid #000;
-    }
-
-    .list {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .card {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.95rem 1.25rem;
-      border-bottom: 1.5px solid #000;
-      text-decoration: none;
-      min-height: 52px;
-      background: #f0ede6;
-      transition: background 0.12s;
-      -webkit-tap-highlight-color: transparent;
-      position: relative;
-    }
-
-    .card:last-child { border-bottom: none; }
-
-    .card-left {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .num {
-      font-size: 10px;
-      color: #9C9C9C;
-      letter-spacing: 0.08em;
-      min-width: 18px;
-    }
-
-    .name {
-      font-size: clamp(13px, 3.5vw, 14px);
-      font-weight: 500;
-      color: #000;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      transition: color 0.12s;
-    }
-
-    .arrow {
-      font-size: 16px;
-      color: #000;
-      transition: color 0.12s, transform 0.14s;
-      flex-shrink: 0;
-    }
-
-    @media (hover: hover) {
-      .card:hover {
-        background: #000;
-      }
-      .card:hover .name { color: #f0ede6; }
-      .card:hover .arrow { color: #f0ede6; transform: translate(3px, -3px); }
-      .card:hover .num { color: #9C9C9C; }
-    }
-
-    .card:active { background: #000; }
-    .card:active .name { color: #f0ede6; }
-    .card:active .arrow { color: #f0ede6; transform: translate(3px, -3px); }
-
-    @media (max-width: 380px) {
-      .card { padding: 0.85rem 1rem; }
-      .site-header { padding: 0.85rem 1rem 0.75rem; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sinstolmoi</title>
+<meta name="description" content="Mini-games and skill tests. Maze, aim, reaction, snake, and more.">
+<link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Mono', monospace;
+  background: #f0ede6;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
+.wrap {
+  width: 100%;
+  max-width: 480px;
+  border: 3px solid #000;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+}
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.95rem 1.25rem;
+  border-bottom: 1.5px solid #000;
+  text-decoration: none;
+  min-height: 52px;
+  background: #f0ede6;
+  transition: background 0.12s;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+.card:last-child { border-bottom: none; }
+.card-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.num {
+  font-size: 10px;
+  color: #9C9C9C;
+  letter-spacing: 0.08em;
+  min-width: 18px;
+}
+.name {
+  font-size: clamp(13px, 3.5vw, 14px);
+  font-weight: 500;
+  color: #000;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color 0.12s;
+}
+.arrow {
+  font-size: 16px;
+  color: #000;
+  transition: color 0.12s, transform 0.14s;
+  flex-shrink: 0;
+}
+@media (hover: hover) {
+  .card:hover { background: #000; }
+  .card:hover .name { color: #f0ede6; }
+  .card:hover .arrow { color: #f0ede6; transform: translate(3px, -3px); }
+  .card:hover .num { color: #9C9C9C; }
+}
+.card:active { background: #000; }
+.card:active .name { color: #f0ede6; }
+.card:active .arrow { color: #f0ede6; transform: translate(3px, -3px); }
+@media (max-width: 380px) {
+  .card { padding: 0.85rem 1rem; }
+}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="list">
-      <a class="card" href="maze.html">
-        <div class="card-left"><span class="num">01</span><span class="name">Maze</span></div>
-        <span class="arrow">↗</span>
-      </a>
-      <a class="card" href="aim_test.html">
-        <div class="card-left"><span class="num">02</span><span class="name">Aim test</span></div>
-        <span class="arrow">↗</span>
-      </a>
-      <a class="card" href="reaction_test.html">
-        <div class="card-left"><span class="num">03</span><span class="name">Reaction test</span></div>
-        <span class="arrow">↗</span>
-      </a>
-      <a class="card" href="click_test.html">
-        <div class="card-left"><span class="num">04</span><span class="name">Click test</span></div>
-        <span class="arrow">↗</span>
-      </a>
-      <a class="card" href="scroll_test.html">
-        <div class="card-left"><span class="num">05</span><span class="name">Scroll test</span></div>
-        <span class="arrow">↗</span>
-      </a>
-      <a class="card" href="animal_pop.html">
-        <div class="card-left"><span class="num">06</span><span class="name">Animal pop</span></div>
-        <span class="arrow">↗</span>
-      </a>
-      <a class="card" href="snake.html">
-        <div class="card-left"><span class="num">07</span><span class="name">snake</span></div>
-        <span class="arrow">↗</span>
-      </a>
-      <a class="card" href="Galaxy_Siege.html">
-        <div class="card-left"><span class="num">08</span><span class="name">Galaxy Siege</span></div>
-        <span class="arrow">↗</span>
-      </a>
-    </div>
+<div class="wrap">
+  <div class="list">
+    <a class="card" href="maze.html">
+      <div class="card-left"><span class="num">01</span><span class="name">Maze</span></div>
+      <span class="arrow">↗</span>
+    </a>
+    <a class="card" href="aim_test.html">
+      <div class="card-left"><span class="num">02</span><span class="name">Aim test</span></div>
+      <span class="arrow">↗</span>
+    </a>
+    <a class="card" href="reaction_test.html">
+      <div class="card-left"><span class="num">03</span><span class="name">Reaction test</span></div>
+      <span class="arrow">↗</span>
+    </a>
+    <a class="card" href="click_test.html">
+      <div class="card-left"><span class="num">04</span><span class="name">Click test</span></div>
+      <span class="arrow">↗</span>
+    </a>
+    <a class="card" href="scroll_test.html">
+      <div class="card-left"><span class="num">05</span><span class="name">Scroll test</span></div>
+      <span class="arrow">↗</span>
+    </a>
+    <a class="card" href="animal_pop.html">
+      <div class="card-left"><span class="num">06</span><span class="name">Animal pop</span></div>
+      <span class="arrow">↗</span>
+    </a>
+    <a class="card" href="snake.html">
+      <div class="card-left"><span class="num">07</span><span class="name">Snake</span></div>
+      <span class="arrow">↗</span>
+    </a>
+    <a class="card" href="Galaxy_Siege.html">
+      <div class="card-left"><span class="num">08</span><span class="name">Galaxy Siege</span></div>
+      <span class="arrow">↗</span>
+    </a>
   </div>
+</div>
 </body>
 </html>
