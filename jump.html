@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jump — sinstolmoi</title>
+<link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'DM Mono', monospace;
+  background: #f0ede6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.25rem;
+}
+.wrap { width: 100%; max-width: 320px; border: 3px solid #000; }
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1.5px solid #000;
+}
+.game-title { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #9C9C9C; }
+#score-display { font-size: 11px; color: #9C9C9C; letter-spacing: 0.06em; text-transform: uppercase; }
+#score-display strong { color: #000; font-weight: 500; }
+canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 9/16;
+  background: #f0ede6;
+  border-bottom: 1.5px solid #000;
+}
+.game-footer { display: flex; align-items: center; padding: 0.85rem 1.25rem; gap: 1rem; }
+#powerup-status { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #9C9C9C; }
+.controls-hint { margin-left: auto; font-size: 10px; letter-spacing: 0.08em; color: #C8C8C8; }
+button {
+  background: #f0ede6;
+  color: #000;
+  border: 1.5px solid #000;
+  padding: 0.45rem 1rem;
+  font-size: 10px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background 0.12s, color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) { button:hover { background: #000; color: #f0ede6; } }
+button:active { background: #000; color: #f0ede6; }
+#home {
+  position: fixed;
+  top: 1rem;
+  left: 1.25rem;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9C9C9C;
+  text-decoration: none;
+  transition: color 0.12s;
+  z-index: 10;
+}
+#home:hover { color: #000; }
+
+</style>
+</head>
+<body>
+<a id="home" href="index.html">← home</a>
+<div class="wrap">
+  <div class="game-header">
+    <span class="game-title">Jump</span>
+    <span id="score-display">Press start</span>
+  </div>
+  <canvas id="c"></canvas>
+  <div class="game-footer">
+    <button id="start-btn">Start</button>
+    <span id="powerup-status"></span>
+    <span class="controls-hint">← → / wasd</span>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+const scoreDisplay  = document.getElementById('score-display');
+const powerupStatus = document.getElementById('powerup-status');
+const startBtn      = document.getElementById('start-btn');
+
+const W = 320, H = 568;
+canvas.width  = W;
+canvas.height = H;
+
+// ─── constants ────────────────────────────────────────────────────────────────
+const PLAYER_W    = 28,  PLAYER_H    = 36;
+const PLAT_W      = 70,  PLAT_H     = 10;
+const GRAVITY     = 0.35;
+const JUMP_BASE   = -11;          // variable jump adds ±0.5
+const SPRING_JUMP = -19;
+const JETPACK_VY  = -6;
+const PLATFORM_GAP_BASE = 80;     // difficulty scales this up
+const NUM_PLATFORMS     = 9;
+const COYOTE_FRAMES     = 7;      // grace frames after leaving a platform edge
+
+// ─── difficulty ───────────────────────────────────────────────────────────────
+// Returns a 0→1 progress value capped at 1, based on display score.
+// At score 0 everything is default; at score 800+ it's fully maxed.
+function diffProgress(displayScore) {
+  return Math.min(displayScore / 800, 1);
+}
+function platGap(displayScore) {
+  // gap grows from 80 → 115
+  return PLATFORM_GAP_BASE + diffProgress(displayScore) * 35;
+}
+function movingPlatSpeed(base) {
+  // base speed is 1.2–2.4; difficulty multiplies up to ×1.7
+  return base * (1 + diffProgress(Math.floor(score / 10)) * 0.7);
+}
+function platTypeWeights(displayScore) {
+  const d = diffProgress(displayScore);
+  // moving: 0.12 → 0.22,  crumble: 0.08 → 0.18
+  return { moving: 0.12 + d * 0.10, crumble: 0.20 + d * 0.10 };
+}
+
+// ─── zones ────────────────────────────────────────────────────────────────────
+const ZONES = [
+  { bg: '#f0ede6', bgBottom: '#f0ede6', platFill: '#3a2a1a', platShine: '#5a4a3a', name: 'meadow' },
+  { bg: '#c8dfa0', bgBottom: '#e8f5c0', platFill: '#4a6a20', platShine: '#6a8a40', name: 'forest' },
+  { bg: '#7ab8e8', bgBottom: '#b8d8f8', platFill: '#a08060', platShine: '#c0a080', name: 'sky'    },
+  { bg: '#1a1a4a', bgBottom: '#2a2a6a', platFill: '#8080c0', platShine: '#a0a0e0', name: 'night'  },
+  { bg: '#000010', bgBottom: '#000820', platFill: '#00ffaa', platShine: '#80ffdd', name: 'space'  }
+];
+const ZONE_SCORE = 300;
+
+// ─── state ────────────────────────────────────────────────────────────────────
+let player, platforms, powerups, particles;
+let score, raf, running;
+let jetpackTimer = 0, hasShield = false, shieldUsed = false;
+let frame = 0;
+let stars = [];
+
+// death animation state
+let dying      = false;   // true while the tumble plays
+let deathFrame = 0;       // counts up during death animation
+const DEATH_DURATION = 55; // frames before overlay appears
+
+// squash/stretch on landing
+let squashTimer = 0;       // counts down; peak squash at SQUASH_PEAK
+const SQUASH_DURATION = 8;
+
+// coyote time
+// coyoteFrames counts down after leaving a platform without jumping
+let coyoteFrames = 0;
+
+const keys = { left: false, right: false };
+
+// platform id counter — reset in initGame so IDs stay tidy per run
+let platIdCounter = 0;
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+function getZoneBlend(s) {
+  const raw  = s / ZONE_SCORE;
+  const z    = Math.min(Math.floor(raw), ZONES.length - 1);
+  const next = Math.min(z + 1, ZONES.length - 1);
+  const t    = Math.min(raw - Math.floor(raw), 1);
+  return { z, next, t };
+}
+
+function lerpColor(a, b, t) {
+  const ah = a.replace('#',''), bh = b.replace('#','');
+  const ar = parseInt(ah.slice(0,2),16), ag = parseInt(ah.slice(2,4),16), ab = parseInt(ah.slice(4,6),16);
+  const br = parseInt(bh.slice(0,2),16), bg = parseInt(bh.slice(2,4),16), bb = parseInt(bh.slice(4,6),16);
+  const r  = Math.round(ar+(br-ar)*t).toString(16).padStart(2,'0');
+  const g  = Math.round(ag+(bg-ag)*t).toString(16).padStart(2,'0');
+  const bl = Math.round(ab+(bb-ab)*t).toString(16).padStart(2,'0');
+  return '#'+r+g+bl;
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.lineTo(x+w-r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+// Centralised powerup status — single place to write the DOM
+function setPowerupStatus(msg) {
+  powerupStatus.textContent = msg;
+}
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 80; i++) {
+    stars.push({
+      x: Math.random()*W, y: Math.random()*H,
+      r: Math.random()*1.5+0.3,
+      twinkle: Math.random()*Math.PI*2
+    });
+  }
+}
+
+// ─── particles ────────────────────────────────────────────────────────────────
+function spawnParticles(x, y, color) {
+  for (let i = 0; i < 8; i++) {
+    const angle = Math.PI + (Math.random()-0.5)*Math.PI;
+    const speed = 1.5 + Math.random()*3;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed - 1,
+      life: 1, decay: 0.045 + Math.random()*0.03,
+      r: 2 + Math.random()*2.5, color
+    });
+  }
+}
+
+function spawnCrumbleParticles(x, y, w, color) {
+  // only bother if the platform is on screen
+  if (y > H+20 || y < -20) return;
+  for (let i = 0; i < 10; i++) {
+    particles.push({
+      x: x + Math.random()*w, y: y + Math.random()*6,
+      vx: (Math.random()-0.5)*3, vy: Math.random()*2+0.5,
+      life: 1, decay: 0.03 + Math.random()*0.03,
+      r: 2 + Math.random()*3, color
+    });
+  }
+}
+
+function updateParticles() {
+  for (let i = particles.length-1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life -= p.decay;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, p.life);
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ─── platform factory ─────────────────────────────────────────────────────────
+// Returns { plat, powerup|null } — caller decides what to push where.
+// No more global side-effects from a factory function.
+function makePlatform(y) {
+  const displayScore = Math.floor(score / 10);
+  const weights = platTypeWeights(displayScore);
+  const r = Math.random();
+  let type = 'normal';
+  if      (r < weights.moving)  type = 'moving';
+  else if (r < weights.crumble) type = 'crumble';
+
+  const baseSpeed = 1.2 + Math.random()*1.2;
+  const plat = {
+    x: Math.random()*(W - PLAT_W), y,
+    w: PLAT_W, h: PLAT_H,
+    type,
+    dir:   Math.random() < 0.5 ? 1 : -1,
+    speed: baseSpeed,          // stored as base; scaled in update
+    crumbleState: 0,           // 0=intact  1=shaking  2=gone
+    crumbleTimer: 0,
+    id: platIdCounter++
+  };
+
+  let powerup = null;
+  if (plat.type !== 'crumble') {
+    const pr = Math.random();
+    const offX = plat.x + PLAT_W/2 - 10;
+    if      (pr < 0.03) powerup = { x: offX, y: plat.y-26, type: 'spring',  platRef: plat };
+    else if (pr < 0.05) powerup = { x: offX, y: plat.y-28, type: 'jetpack', platRef: plat };
+    else if (pr < 0.07) powerup = { x: offX, y: plat.y-24, type: 'shield',  platRef: plat };
+  }
+  return { plat, powerup };
+}
+
+function addPlatform(y) {
+  const { plat, powerup } = makePlatform(y);
+  platforms.push(plat);
+  if (powerup) powerups.push(powerup);
+}
+
+// ─── init ─────────────────────────────────────────────────────────────────────
+function initGame() {
+  platIdCounter = 0;
+
+  player = {
+    x: W/2 - PLAYER_W/2, y: H-140,
+    vx: 0, vy: JUMP_BASE,
+    w: PLAYER_W, h: PLAYER_H,
+    lastPlatId: null, lastPlatY: null,
+    jumpCooldown: 0,
+    onGround: false   // used for coyote time
+  };
+
+  score       = 0;
+  platforms   = [];
+  powerups    = [];
+  particles   = [];
+  jetpackTimer = 0;
+  hasShield    = false;
+  shieldUsed   = false;
+  dying        = false;
+  deathFrame   = 0;
+  squashTimer  = 0;
+  coyoteFrames = 0;
+  frame        = 0;
+
+  keys.left = keys.right = false;
+
+  // Bootstrap platforms without using addPlatform so we can patch [0] safely
+  for (let i = 0; i < NUM_PLATFORMS; i++) {
+    const { plat, powerup } = makePlatform(H - 60 - i * PLATFORM_GAP_BASE);
+    platforms.push(plat);
+    if (powerup) powerups.push(powerup);
+  }
+  // Guaranteed safe starting platform
+  platforms[0] = {
+    x: W/2 - PLAT_W/2, y: H-100,
+    w: PLAT_W, h: PLAT_H,
+    type: 'normal', dir: 1, speed: 0,
+    crumbleState: 0, crumbleTimer: 0,
+    id: platIdCounter++
+  };
+
+  initStars();
+  running = true;
+}
+
+// ─── draw helpers ─────────────────────────────────────────────────────────────
+function drawSpring(x, y) {
+  ctx.save();
+  ctx.fillStyle = '#444'; ctx.fillRect(x+2, y+20, 16, 4);
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  const cx = x+10;
+  for (let i = 0; i < 4; i++) {
+    const yy = y+18-i*4;
+    ctx.beginPath();
+    if (i%2===0) { ctx.moveTo(cx-7,yy); ctx.lineTo(cx+7,yy-3); }
+    else         { ctx.moveTo(cx+7,yy-3); ctx.lineTo(cx-7,yy-6); }
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#111'; ctx.fillRect(x+3, y+2, 14, 4);
+  ctx.restore();
+}
+
+function drawJetpack(x, y) {
+  ctx.save();
+  ctx.fillStyle = '#222';
+  roundRect(x+3, y+2, 14, 18, 3); ctx.fill();
+  ctx.strokeStyle = '#555'; ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x+5,y+6);  ctx.lineTo(x+5,y+16);
+  ctx.moveTo(x+15,y+6); ctx.lineTo(x+15,y+16);
+  ctx.stroke();
+  ctx.fillStyle = '#444';
+  ctx.fillRect(x+4,y+18,4,5); ctx.fillRect(x+12,y+18,4,5);
+  ctx.fillStyle = '#888';
+  ctx.beginPath();
+  ctx.moveTo(x+4,y+23);
+  ctx.quadraticCurveTo(x+6,y+30,x+8,y+26);
+  ctx.quadraticCurveTo(x+10,y+30,x+12,y+23);
+  ctx.fill();
+  ctx.fillStyle = '#555'; ctx.fillRect(x+6, y+4, 4, 8);
+  ctx.restore();
+}
+
+function drawShield(x, y) {
+  ctx.save();
+  const cx = x+10, cy = y+12, r = 11;
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI/3)*i - Math.PI/6;
+    const px = cx + r*Math.cos(angle), py = cy + r*Math.sin(angle);
+    i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#ddd'; ctx.fill();
+  ctx.strokeStyle = '#222'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = '#999'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx,cy-6); ctx.lineTo(cx,cy+6);
+  ctx.moveTo(cx-5,cy-3); ctx.lineTo(cx+5,cy+3);
+  ctx.moveTo(cx-5,cy+3); ctx.lineTo(cx+5,cy-3);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// drawRabbit supports:
+//   squashY  — vertical squash factor (1 = normal, <1 = squashed)
+//   deathSpin — rotation in radians for death tumble
+function drawRabbit(x, y, vy, vx, squashY, deathSpin) {
+  ctx.save();
+  const cx = x + PLAYER_W/2;
+  const cy = y + PLAYER_H/2;
+
+  // death spin: rotate around centre
+  if (deathSpin) {
+    ctx.translate(cx, cy);
+    ctx.rotate(deathSpin);
+    ctx.translate(-cx, -cy);
+  }
+
+  // squash/stretch: scale vertically around feet
+  if (squashY && squashY !== 1) {
+    const feetY = y + PLAYER_H;
+    ctx.translate(cx, feetY);
+    ctx.scale(1, squashY);
+    ctx.translate(-cx, -feetY);
+  }
+
+  const falling    = vy > 1;
+  const rising     = vy < -2;
+  const facingLeft = vx < -0.5;
+
+  const armAngle = falling ? 1.0 : rising ? -0.5 : Math.sin(frame*0.18)*0.55;
+  ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx-8, y+20);
+  ctx.lineTo(cx-8 - Math.cos(armAngle)*9, y+20 + Math.sin(armAngle)*7);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx+8, y+20);
+  ctx.lineTo(cx+8 + Math.cos(armAngle)*9, y+20 + Math.sin(armAngle)*7);
+  ctx.stroke();
+
+  const legSpread = falling ? 10 : rising ? 2 : 5;
+  const legDrop   = falling ? 8  : 4;
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(cx-4, y+32); ctx.lineTo(cx-legSpread, y+32+legDrop); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+4, y+32); ctx.lineTo(cx+legSpread, y+32+legDrop); ctx.stroke();
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(cx-legSpread-4, y+32+legDrop); ctx.lineTo(cx-legSpread+5, y+32+legDrop); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+legSpread-5, y+32+legDrop); ctx.lineTo(cx+legSpread+4, y+32+legDrop); ctx.stroke();
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.ellipse(cx, y+22, 10, 12, 0, 0, Math.PI*2); ctx.fill();
+
+  const earLean = facingLeft ? -2 : 2;
+  const earTilt = facingLeft ? -0.15 : 0.15;
+  ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.ellipse(cx-5+earLean, y-7, 3.5, 10, earTilt, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+5+earLean, y-7, 3.5, 10, earTilt, 0, Math.PI*2); ctx.fill();
+
+  ctx.fillStyle = '#000';
+  ctx.beginPath(); ctx.arc(cx, y+9, 10, 0, Math.PI*2); ctx.fill();
+
+  const eyeShift = facingLeft ? -2 : 2;
+  // death: X eyes
+  if (deathSpin !== undefined && deathFrame > 10) {
+    ctx.strokeStyle = '#f0ede6'; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+    for (const ex of [cx-3+eyeShift, cx+3+eyeShift]) {
+      ctx.beginPath(); ctx.moveTo(ex-2, y+6); ctx.lineTo(ex+2, y+10); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ex+2, y+6); ctx.lineTo(ex-2, y+10); ctx.stroke();
+    }
+  } else {
+    ctx.fillStyle = '#f0ede6';
+    ctx.beginPath(); ctx.arc(cx-3+eyeShift, y+8, falling?2.5:2, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx+3+eyeShift, y+8, falling?2.5:2, 0, Math.PI*2); ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// ─── update ───────────────────────────────────────────────────────────────────
+function update() {
+  if (!running) return;
+  frame++;
+
+  // ── death animation ────────────────────────────────────────────────────────
+  if (dying) {
+    deathFrame++;
+    player.vy += GRAVITY * 0.8;
+    player.vx *= 0.97;
+    player.x  += player.vx;
+    player.y  += player.vy;
+    if (player.x + player.w < 0) player.x = W;
+    if (player.x > W) player.x = -player.w;
+    if (deathFrame >= DEATH_DURATION) { dying = false; endGame(); }
+    return;
+  }
+
+  // ── jetpack ────────────────────────────────────────────────────────────────
+  if (jetpackTimer > 0) {
+    player.vy = JETPACK_VY;
+    jetpackTimer--;
+    setPowerupStatus('jetpack ' + jetpackTimer);
+    if (jetpackTimer === 0) setPowerupStatus(hasShield ? 'shield ready' : '');
+  } else {
+    player.vy += GRAVITY;
+  }
+
+  // ── horizontal movement ────────────────────────────────────────────────────
+  const speed = 5.5;
+  if      (keys.left)  player.vx = -speed;
+  else if (keys.right) player.vx =  speed;
+  else                 player.vx *= 0.8;
+
+  player.x += player.vx;
+  player.y += player.vy;
+
+  // wrap horizontally
+  if (player.x + player.w < 0) player.x = W;
+  if (player.x > W) player.x = -player.w;
+
+  // ── clear lastPlat once clearly above it ──────────────────────────────────
+  if (player.lastPlatId !== null && player.y + player.h < (player.lastPlatY || 0) - 4) {
+    player.lastPlatId = null;
+    player.lastPlatY  = null;
+  }
+
+  // ── platform movement & crumble timers ────────────────────────────────────
+  const displayScore = Math.floor(score / 10);
+  platforms.forEach(p => {
+    if (p.type === 'moving') {
+      const dx = p.dir * movingPlatSpeed(p.speed);
+      p.x += dx;
+      if (p.x <= 0 || p.x + p.w >= W) p.dir *= -1;
+      // keep powerups glued to moving platforms (x only — y handled by scroll)
+      powerups.forEach(pu => { if (pu.platRef === p) pu.x += dx; });
+    }
+    if (p.crumbleState === 1) {
+      p.crumbleTimer--;
+      if (p.crumbleTimer <= 0) {
+        p.crumbleState = 2;
+        spawnCrumbleParticles(p.x, p.y, p.w, '#8B6A4A');
+      }
+    }
+  });
+
+  // ── world scroll ──────────────────────────────────────────────────────────
+  if (player.y < H/2) {
+    const diff = H/2 - player.y;
+    player.y = H/2;
+    if (player.lastPlatY !== null) player.lastPlatY += diff;
+    platforms.forEach(p  => p.y  += diff);
+    powerups.forEach(pu  => pu.y += diff);
+    particles.forEach(pt => pt.y += diff);
+    score += Math.round(diff);
+
+    platforms = platforms.filter(p  => p.y  < H+20);
+    powerups  = powerups.filter(pu => pu.y  < H+40);
+
+    const gap = platGap(Math.floor(score/10));
+    while (platforms.length < NUM_PLATFORMS) {
+      let topY = Infinity;
+      for (let i = 0; i < platforms.length; i++) {
+        if (platforms[i].y < topY) topY = platforms[i].y;
+      }
+      addPlatform(topY - gap + Math.random()*10 - 5);
+    }
+  }
+
+  // ── powerup collection ────────────────────────────────────────────────────
+  powerups = powerups.filter(pu => {
+    const pw = 20, ph = 28;
+    const hit = player.x+player.w > pu.x && player.x < pu.x+pw &&
+                player.y+player.h > pu.y && player.y < pu.y+ph;
+    if (!hit) return true;
+    if      (pu.type === 'spring')                  { player.vy = SPRING_JUMP; }
+    else if (pu.type === 'jetpack')                 { jetpackTimer = 120; setPowerupStatus('jetpack 120'); }
+    else if (pu.type === 'shield' && !hasShield)    { hasShield = true; setPowerupStatus('shield ready'); }
+    return false;
+  });
+
+  // ── squash timer ──────────────────────────────────────────────────────────
+  if (squashTimer > 0) squashTimer--;
+
+  // ── cooldown ──────────────────────────────────────────────────────────────
+  if (player.jumpCooldown > 0) player.jumpCooldown--;
+
+  // ── coyote time ───────────────────────────────────────────────────────────
+  // If player was on ground last frame but is now falling and no platform below,
+  // start / continue the coyote window.
+  if (player.onGround && player.vy > 0) {
+    // just left a platform
+    if (coyoteFrames === 0) coyoteFrames = COYOTE_FRAMES;
+  }
+  if (coyoteFrames > 0) coyoteFrames--;
+  player.onGround = false; // reset each frame; set true in collision below
+
+  // ── collision ─────────────────────────────────────────────────────────────
+  const canLand = jetpackTimer === 0 && player.jumpCooldown === 0;
+  const falling  = player.vy > 0;
+  const inCoyote = coyoteFrames > 0;
+
+  if (canLand && (falling || inCoyote)) {
+    const feetNow  = player.y + player.h;
+    const feetPrev = feetNow - player.vy;
+    for (const p of platforms) {
+      if (p.crumbleState === 2)       continue;
+      if (p.id === player.lastPlatId) continue;
+      const withinX   = player.x+player.w > p.x && player.x < p.x+p.w;
+      const crossedTop = feetPrev <= p.y && feetNow >= p.y;
+      const nearTop    = feetNow  >= p.y && feetNow <= p.y+p.h+2;
+      if (withinX && (crossedTop || nearTop)) {
+        const { z, next, t } = getZoneBlend(displayScore);
+        const pColor = p.type === 'moving'
+          ? lerpColor('#888', z>=4 ? '#ff8800' : '#aaa', t*0.5)
+          : lerpColor(ZONES[z].platFill, ZONES[next].platFill, t);
+        spawnParticles(player.x + PLAYER_W/2, p.y, pColor);
+
+        // variable jump height: ±0.5 random variance
+        const jumpVariance = (Math.random()-0.5);
+        player.vy = JUMP_BASE + jumpVariance;
+        player.y  = p.y - player.h;
+
+        player.lastPlatId = p.id;
+        player.lastPlatY  = p.y;
+        player.jumpCooldown = 4;
+        player.onGround   = true;
+        coyoteFrames      = 0;
+        squashTimer       = SQUASH_DURATION;
+
+        // only trigger crumble if jetpack is NOT active
+        if (p.type === 'crumble' && p.crumbleState === 0 && jetpackTimer === 0) {
+          p.crumbleState = 1;
+          p.crumbleTimer = 28;
+        }
+        break;
+      }
+    }
+  }
+
+  // remove fully-crumbled platforms
+  platforms = platforms.filter(p => p.crumbleState !== 2);
+
+  updateParticles();
+
+  // ── fall-off-screen ────────────────────────────────────────────────────────
+  if (player.y > H + 40) {
+    if (hasShield && !shieldUsed) {
+      shieldUsed = true;
+      hasShield  = false;
+      setPowerupStatus('shield used!');
+      let topPlat = platforms[0];
+      for (let i = 1; i < platforms.length; i++) {
+        if (platforms[i].y < topPlat.y) topPlat = platforms[i];
+      }
+      // place player above the top platform, not clipping into it
+      player.y = topPlat.y - PLAYER_H - 10;
+      player.x = Math.max(0, Math.min(topPlat.x + PLAT_W/2 - PLAYER_W/2, W - PLAYER_W));
+      player.vy = JUMP_BASE;
+      player.lastPlatId = null;
+      player.lastPlatY  = null;
+      setTimeout(() => { if (running) setPowerupStatus(''); }, 1200);
+    } else {
+      // kick off death animation instead of instant game over
+      dying      = true;
+      deathFrame = 0;
+      running    = false; // pause normal update; death loop handles player only
+      running    = true;  // keep loop going for the animation
+      player.vy  = -7;    // little upward kick before tumble
+      player.vx  = (player.vx > 0 ? 1 : -1) * (2 + Math.random()*2);
+    }
+  }
+
+  if (!dying) {
+    scoreDisplay.innerHTML = `Score <strong>${Math.floor(score/10)}</strong>`;
+  }
+}
+
+// ─── draw ─────────────────────────────────────────────────────────────────────
+function draw() {
+  const displayScore = Math.floor(score/10);
+  const { z, next, t } = getZoneBlend(displayScore);
+  const zone     = ZONES[z];
+  const zoneNext = ZONES[next];
+
+  // background
+  const bgTop = lerpColor(zone.bg,       zoneNext.bg,       t);
+  const bgBot = lerpColor(zone.bgBottom, zoneNext.bgBottom, t);
+  const grad  = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, bgTop); grad.addColorStop(1, bgBot);
+  ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+
+  // stars
+  const starAlpha = z >= 3 ? Math.min(1, (z-3+t)*1.2) : 0;
+  if (starAlpha > 0) {
+    stars.forEach(s => {
+      s.twinkle += 0.04;
+      const brightness = 0.6 + Math.sin(s.twinkle)*0.4;
+      ctx.fillStyle = z === 4
+        ? `rgba(255,255,220,${starAlpha*brightness})`
+        : `rgba(200,200,255,${starAlpha*brightness*0.7})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+    });
+  }
+
+  // platform colour helpers
+  const platFill = p => {
+    if (p.type === 'moving')  return lerpColor('#888', z>=4?'#ff8800':'#aaa', t*0.5);
+    if (p.type === 'crumble') return lerpColor('#9B7A5A', '#7A5A3A', Math.min(p.crumbleTimer/28, 1));
+    return lerpColor(zone.platFill, zoneNext.platFill, t);
+  };
+  const platShine = p => {
+    if (p.type === 'moving')  return lerpColor('#aaa', z>=4?'#ffcc44':'#ccc', t*0.5);
+    if (p.type === 'crumble') return '#B89A7A';
+    return lerpColor(zone.platShine, zoneNext.platShine, t);
+  };
+
+  // platforms
+  platforms.forEach(p => {
+    if (p.crumbleState === 2) return;
+    ctx.save();
+    if (p.crumbleState === 1) {
+      ctx.translate((Math.random()-0.5)*3*(p.crumbleTimer/28), 0);
+    }
+    ctx.fillStyle = platFill(p);
+    roundRect(p.x, p.y, p.w, p.h, 3); ctx.fill();
+    ctx.fillStyle = platShine(p);
+    roundRect(p.x+4, p.y+2, p.w-8, 3, 1); ctx.fill();
+
+    if (p.type === 'crumble') {
+      const crackAlpha = p.crumbleState===1 ? 0.7 : 0.35;
+      ctx.strokeStyle = `rgba(0,0,0,${crackAlpha})`;
+      ctx.lineWidth = 1; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(p.x+p.w*0.28,p.y+1); ctx.lineTo(p.x+p.w*0.22,p.y+5); ctx.lineTo(p.x+p.w*0.26,p.y+p.h-1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p.x+p.w*0.63,p.y+1); ctx.lineTo(p.x+p.w*0.70,p.y+5); ctx.lineTo(p.x+p.w*0.66,p.y+p.h-1);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p.x+p.w*0.22,p.y+5); ctx.lineTo(p.x+p.w*0.15,p.y+4);
+      ctx.stroke();
+    }
+    if (z >= 4) {
+      ctx.strokeStyle = lerpColor('#003322', '#00ffaa', t);
+      ctx.lineWidth = 1.5; roundRect(p.x, p.y, p.w, p.h, 3); ctx.stroke();
+    }
+    ctx.restore();
+  });
+
+  drawParticles();
+
+  // powerups
+  powerups.forEach(pu => {
+    if      (pu.type === 'spring')  drawSpring(pu.x, pu.y);
+    else if (pu.type === 'jetpack') drawJetpack(pu.x, pu.y);
+    else if (pu.type === 'shield')  drawShield(pu.x, pu.y);
+  });
+
+  // shield ring
+  if (hasShield) {
+    ctx.save();
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 2;
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.arc(player.x+player.w/2, player.y+player.h/2, 26, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // jetpack flame
+  if (jetpackTimer > 0) {
+    ctx.save();
+    ctx.fillStyle = '#555';
+    ctx.beginPath();
+    ctx.moveTo(player.x+6, player.y+player.h);
+    ctx.quadraticCurveTo(
+      player.x+player.w/2,
+      player.y+player.h+14+Math.random()*6,
+      player.x+player.w-6, player.y+player.h
+    );
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // rabbit — squash on landing, spin during death
+  const squashY = squashTimer > 0
+    ? 0.7 + 0.3*(1 - squashTimer/SQUASH_DURATION)   // 0.7 → 1.0
+    : 1;
+  const deathSpin = dying
+    ? (deathFrame/DEATH_DURATION) * Math.PI * 2.5 * (player.vx >= 0 ? 1 : -1)
+    : undefined;
+
+  drawRabbit(player.x, player.y, player.vy, player.vx, squashY, deathSpin);
+}
+
+// ─── loop ─────────────────────────────────────────────────────────────────────
+function loop() {
+  update();
+  draw();
+  if (running || dying) raf = requestAnimationFrame(loop);
+}
+
+// ─── end game ─────────────────────────────────────────────────────────────────
+function endGame() {
+  running = false;
+  dying   = false;
+  cancelAnimationFrame(raf);
+  const displayScore = Math.floor(score/10);
+
+  // persist high score
+  const best = parseInt(localStorage.getItem('jump_best') || '0', 10);
+  const newBest = displayScore > best;
+  if (newBest) localStorage.setItem('jump_best', displayScore);
+
+  scoreDisplay.innerHTML = `Done &nbsp;·&nbsp; <strong>${displayScore}</strong>`;
+  setPowerupStatus('');
+  startBtn.style.display = 'inline-block';
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(240,237,230,0.88)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#000';
+  ctx.textAlign = 'center';
+  ctx.font = '500 13px DM Mono, monospace';
+  ctx.fillText('GAME OVER', W/2, H/2 - 22);
+  ctx.font = '300 11px DM Mono, monospace';
+  ctx.fillText('SCORE  ' + displayScore, W/2, H/2 + 2);
+  if (newBest) {
+    ctx.fillStyle = '#666';
+    ctx.fillText('new best!', W/2, H/2 + 20);
+  } else {
+    ctx.fillStyle = '#aaa';
+    ctx.fillText('best  ' + best, W/2, H/2 + 20);
+  }
+  ctx.restore();
+}
+
+// ─── input ────────────────────────────────────────────────────────────────────
+startBtn.onclick = () => {
+  startBtn.style.display = 'none';
+  setPowerupStatus('');
+  initGame();
+  raf = requestAnimationFrame(loop);
+};
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft'  || e.key === 'a') keys.left  = true;
+  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = true;
+});
+document.addEventListener('keyup', e => {
+  if (e.key === 'ArrowLeft'  || e.key === 'a') keys.left  = false;
+  if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+});
+
+
+// ─── initial canvas message ───────────────────────────────────────────────────
+ctx.save();
+ctx.fillStyle = '#9C9C9C';
+ctx.font = '300 10px DM Mono, monospace';
+ctx.textAlign = 'center';
+ctx.fillText('PRESS START', W/2, H/2);
+ctx.restore();
+</script>
+</body>
+</html>
