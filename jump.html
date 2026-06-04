@@ -490,19 +490,22 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 // ── Constants ──────────────────────────────────────────────────────────
-const PLAYER_W      = 26, PLAYER_H    = 34;
-const PLAT_W        = 68, PLAT_H      = 9;
-const GRAVITY       = 0.36;
-const JUMP_BASE     = -11.2;
-const SPRING_JUMP   = -19.5;
-const JETPACK_VY    = -6.2;
-const PLAT_GAP_BASE = 78;
-const NUM_PLATFORMS = 9;
-const COYOTE_FRAMES = 8;
-const SQUASH_DUR    = 9;
-const DEATH_DUR     = 60;
-const ZONE_SCORE    = 300;
-const COMBO_WINDOW  = 90;
+const PLAYER_W        = 26, PLAYER_H      = 34;
+const PLAT_W          = 68, PLAT_H        = 9;
+const GRAVITY         = 0.38;
+const GRAVITY_FALL    = 0.54;   // snappier fall arc
+const JUMP_BASE       = -12.0;
+const SPRING_JUMP     = -20.5;
+const JETPACK_VY      = -6.2;
+const MAX_VY          = 18;     // terminal velocity
+const PLAT_GAP_BASE   = 75;
+const NUM_PLATFORMS   = 10;
+const COYOTE_FRAMES   = 8;
+const SQUASH_DUR      = 10;
+const DEATH_DUR       = 60;
+const ZONE_SCORE      = 300;
+const COMBO_WINDOW    = 80;
+const TRAIL_LEN       = 5;
 
 // ── Zones ──────────────────────────────────────────────────────────────
 const ZONES = [
@@ -530,9 +533,20 @@ const ZONES = [
 
 // ── Difficulty ─────────────────────────────────────────────────────────
 const diffP       = ds => Math.min(ds/800, 1);
-const platGap     = ds => PLAT_GAP_BASE + diffP(ds)*38;
-const movingSpd   = (b,ds)=> b*(1+diffP(ds)*0.75);
-const platWeights = ds => ({ moving:0.12+diffP(ds)*0.10, crumble:0.20+diffP(ds)*0.10 });
+const platGap     = ds => PLAT_GAP_BASE + diffP(ds)*42;
+const movingSpd   = (b,ds)=> b*(1+diffP(ds)*0.85);
+
+// Platform width shrinks from 80→44 as difficulty rises
+const platWidth   = ds => Math.round(80 - diffP(ds)*36);
+
+function platWeights(ds) {
+  const d=diffP(ds);
+  return {
+    moving:  0.10 + d*0.14,   // 10% → 24%
+    crumble: 0.18 + d*0.12,   // 18% → 30%
+    bouncy:  0.08 + d*0.04,   // 8%  → 12%  (new!)
+  };
+}
 
 // ── Colour helpers ─────────────────────────────────────────────────────
 function lerpC(a,b,t) {
@@ -571,6 +585,9 @@ let squashTimer=0;
 let coyoteFrames=0, platIdCounter=0, lastZoneIdx=-1;
 let shakeFrames=0, shakeMag=0;
 let combo=0, comboTimer=0;
+let playerTrail=[];
+let scoreAnim=0;
+let highScoreBeaten=false;
 const keys={left:false,right:false};
 
 // ── Persistent stats ───────────────────────────────────────────────────
@@ -638,6 +655,21 @@ function spawnDeathPoof(x,y){
     particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-2,life:1,decay:0.022+Math.random()*0.018,r:2+Math.random()*4,color:'#fff',type:'dp'});
   }
 }
+function spawnBounceBurst(x,y,col){
+  for(let i=0;i<20;i++){
+    const a=-Math.PI/2+(Math.random()-0.5)*Math.PI*1.1,s=2+Math.random()*6;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:1,decay:0.03+Math.random()*0.02,r:1.5+Math.random()*2.5,color:col,type:'bb'});
+  }
+}
+function spawnCoinBurst(x,y){
+  for(let i=0;i<10;i++){
+    const a=Math.random()*Math.PI*2,s=1+Math.random()*3;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1,life:1,decay:0.04+Math.random()*0.03,r:2+Math.random()*2,color:'#ffe040',type:'coin'});
+  }
+}
+function spawnSpeedTrail(x,y,col){
+  particles.push({x:x+PLAYER_W/2,y:y+PLAYER_H/2,vx:(Math.random()-0.5)*0.5,vy:0.5+Math.random(),life:0.45,decay:0.06,r:4+Math.random()*3,color:col,type:'trail'});
+}
 function tickParticles(){
   for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];
@@ -683,16 +715,19 @@ function makePlatform(y){
   const ds=Math.floor(score/10);
   const wt=platWeights(ds), r=Math.random();
   let type='normal';
-  if(r<wt.moving) type='moving';
-  else if(r<wt.crumble) type='crumble';
+  if     (r<wt.moving)              type='moving';
+  else if(r<wt.moving+wt.crumble)   type='crumble';
+  else if(r<wt.moving+wt.crumble+wt.bouncy) type='bouncy';
+
+  const pw = type==='crumble' ? Math.max(44, platWidth(ds)-8) : platWidth(ds);
   const plat={
-    x:Math.random()*(W-PLAT_W), y, w:PLAT_W, h:PLAT_H, type,
-    dir:Math.random()<0.5?1:-1, speed:1.2+Math.random()*1.2,
+    x:Math.random()*(W-pw), y, w:pw, h:PLAT_H, type,
+    dir:Math.random()<0.5?1:-1, speed:1.2+Math.random()*1.4,
     crumbleState:0, crumbleTimer:0, id:platIdCounter++
   };
   let powerup=null;
   if(plat.type!=='crumble'){
-    const pr=Math.random(), ox=plat.x+PLAT_W/2-10;
+    const pr=Math.random(), ox=plat.x+pw/2-10;
     if     (pr<0.03) powerup={x:ox,y:plat.y-28,type:'spring', platId:plat.id};
     else if(pr<0.05) powerup={x:ox,y:plat.y-30,type:'jetpack',platId:plat.id};
     else if(pr<0.07) powerup={x:ox,y:plat.y-26,type:'shield', platId:plat.id};
@@ -735,6 +770,7 @@ function initGame(){
   dying=false; deathFrame=0; squashTimer=0;
   coyoteFrames=0; frame=0; lastZoneIdx=-1;
   shakeFrames=0; shakeMag=0; combo=0; comboTimer=0;
+  playerTrail=[]; scoreAnim=0; highScoreBeaten=false;
   keys.left=keys.right=false;
 
   for(let i=0;i<NUM_PLATFORMS;i++){
@@ -806,6 +842,21 @@ function drawShieldItem(x,y){
   ctx.closePath();
   ctx.fillStyle='rgba(150,190,240,0.25)'; ctx.fill();
   ctx.strokeStyle='rgba(180,220,255,0.7)'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.restore();
+}
+function drawCoin(x,y){
+  const bob=Math.sin(frame*0.1+x)*1.8;
+  const pulse=0.85+Math.sin(frame*0.1+x)*0.15;
+  ctx.save(); ctx.translate(x+9,y+9+bob);
+  ctx.save(); ctx.shadowColor='rgba(255,220,0,0.7)'; ctx.shadowBlur=10;
+  ctx.fillStyle=`rgba(255,210,0,${pulse})`;
+  ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle='rgba(180,140,0,0.6)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='rgba(255,240,100,0.9)';
+  ctx.font='bold 8px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('★',0,0.5);
   ctx.restore();
 }
 
@@ -886,6 +937,7 @@ function update(){
   if(!running) return;
   frame++;
 
+  // death animation
   if(dying){
     deathFrame++;
     player.vy+=GRAVITY*0.75; player.vx*=0.97;
@@ -897,17 +949,36 @@ function update(){
     return;
   }
 
+  // ── Physics ──────────────────────────────────────────────────────────
   if(jetpackTimer>0){
     player.vy=JETPACK_VY; jetpackTimer--;
     powerupText.textContent='JETPACK  '+jetpackTimer;
     spawnJetFlame(player.x+PLAYER_W/2,player.y+PLAYER_H);
     if(jetpackTimer===0) powerupText.textContent=hasShield?'SHIELD READY':'';
-  } else { player.vy+=GRAVITY; }
+  } else {
+    // asymmetric gravity: snappier fall than rise
+    const grav = player.vy > 0 ? GRAVITY_FALL : GRAVITY;
+    player.vy = Math.min(player.vy + grav, MAX_VY);
+  }
 
-  const spd=5.6;
-  if(keys.left) player.vx=-spd; else if(keys.right) player.vx=spd; else player.vx*=0.82;
+  // ── Horizontal — air vs ground feel ──────────────────────────────────
+  const onGround = player.onGround;
+  const accel  = onGround ? 5.8 : 4.8;   // less air accel
+  const fric   = onGround ? 0.78 : 0.88; // more air drift
+  if(keys.left)       player.vx = Math.max(player.vx - 1.2, -accel);
+  else if(keys.right) player.vx = Math.min(player.vx + 1.2,  accel);
+  else                player.vx *= fric;
+
   player.x+=player.vx; player.y+=player.vy;
   if(player.x+player.w<0) player.x=W; if(player.x>W) player.x=-player.w;
+
+  // ── Speed trail ───────────────────────────────────────────────────────
+  const spd=Math.abs(player.vx)+Math.abs(player.vy);
+  if(spd>9 && !dying){
+    const{z,nxt,t}=zoneBlend(Math.floor(score/10));
+    const tc=lerpC(ZONES[z].accent||'#fff',ZONES[nxt].accent||'#fff',t);
+    spawnSpeedTrail(player.x,player.y,tc);
+  }
 
   if(player.lastPlatId!==null&&player.y+player.h<(player.lastPlatY||0)-4){
     player.lastPlatId=null; player.lastPlatY=null;
@@ -917,6 +988,7 @@ function update(){
 
   const ds=Math.floor(score/10);
 
+  // ── Platform movement & crumble ───────────────────────────────────────
   platforms.forEach(p=>{
     if(p.type==='moving'){
       const dx=p.dir*movingSpd(p.speed,ds);
@@ -934,6 +1006,7 @@ function update(){
     }
   });
 
+  // ── World scroll ──────────────────────────────────────────────────────
   if(player.y<H/2){
     const diff=H/2-player.y;
     player.y=H/2;
@@ -952,15 +1025,15 @@ function update(){
     while(platforms.length<NUM_PLATFORMS){
       let topY=Infinity;
       platforms.forEach(p=>{if(p.y<topY) topY=p.y;});
-      addPlatform(topY-gap+Math.random()*10-5);
+      addPlatform(topY-gap+Math.random()*12-6);
     }
   }
 
+  // ── Zone change ───────────────────────────────────────────────────────
   const{z}=zoneBlend(ds);
   if(z!==lastZoneIdx){
     lastZoneIdx=z;
     hudZone.textContent=ZONES[z].name.toUpperCase();
-    // Adapt HUD text color for bright zones (Meadow, Sky)
     const brightZone = z===0||z===2;
     hudScore.style.color       = brightZone?'#111':'#fff';
     hudScore.style.textShadow  = brightZone?'0 1px 4px rgba(255,255,255,0.4)':'0 1px 6px rgba(0,0,0,0.5)';
@@ -973,12 +1046,18 @@ function update(){
     }
   }
 
+  // ── Powerup / coin collection ─────────────────────────────────────────
   powerups=powerups.filter(pu=>{
     const hit=player.x+player.w>pu.x&&player.x<pu.x+20&&player.y+player.h>pu.y&&player.y<pu.y+28;
     if(!hit) return true;
-    if(pu.type==='spring'){ player.vy=SPRING_JUMP; spawnSpringBurst(player.x+PLAYER_W/2,player.y); triggerShake(4,1.5); }
-    else if(pu.type==='jetpack'){ jetpackTimer=120; powerupText.textContent='JETPACK  120'; }
-    else if(pu.type==='shield'&&!hasShield){ hasShield=true; powerupText.textContent='SHIELD READY'; }
+    if(pu.type==='spring'){
+      player.vy=SPRING_JUMP;
+      spawnSpringBurst(player.x+PLAYER_W/2,player.y); triggerShake(4,1.5);
+    } else if(pu.type==='jetpack'){
+      jetpackTimer=120; powerupText.textContent='JETPACK  120';
+    } else if(pu.type==='shield'&&!hasShield){
+      hasShield=true; powerupText.textContent='SHIELD READY';
+    }
     return false;
   });
 
@@ -986,10 +1065,12 @@ function update(){
   if(player.jumpCooldown>0) player.jumpCooldown--;
   if(shakeFrames>0) shakeFrames--;
 
+  // ── Coyote time ───────────────────────────────────────────────────────
   if(player.onGround&&player.vy>0){ if(coyoteFrames===0) coyoteFrames=COYOTE_FRAMES; }
   if(coyoteFrames>0) coyoteFrames--;
   player.onGround=false;
 
+  // ── Collision ─────────────────────────────────────────────────────────
   const canLand=jetpackTimer===0&&player.jumpCooldown===0;
   if(canLand&&(player.vy>0||coyoteFrames>0)){
     const fN=player.y+player.h, fP=fN-player.vy;
@@ -999,15 +1080,35 @@ function update(){
       const wX=player.x+player.w>p.x&&player.x<p.x+p.w;
       if(wX&&((fP<=p.y&&fN>=p.y)||(fN>=p.y&&fN<=p.y+p.h+3))){
         const{z,nxt,t}=zoneBlend(ds);
-        const col=p.type==='moving'?lerpC('#556677',z>=4?'#cc7700':'#8899aa',t*0.6):lerpC(ZONES[z].pFill,ZONES[nxt].pFill,t);
-        spawnLand(player.x+PLAYER_W/2,p.y,col);
-        player.vy=JUMP_BASE+(Math.random()-0.5)*0.6;
+        const col=p.type==='moving'
+          ?lerpC('#556677',z>=4?'#cc7700':'#8899aa',t*0.6)
+          :lerpC(ZONES[z].pFill,ZONES[nxt].pFill,t);
+
+        // impact strength scales with fall speed (AAA feel)
+        const impact=Math.min(Math.abs(player.vy)/MAX_VY, 1);
+
+        if(p.type==='bouncy'){
+          // Bouncy platform — strong upward launch, no combo reset
+          player.vy = SPRING_JUMP * 0.82;
+          const bc=z>=4?'#00ffaa':z===3?'#ff40ff':z===2?'#fff':z===1?'#a8ff60':'#f5e642';
+          spawnBounceBurst(player.x+PLAYER_W/2, p.y, bc);
+          triggerShake(Math.round(3+impact*4), 1+impact*2);
+        } else {
+          player.vy=JUMP_BASE+(Math.random()-0.5)*0.4;
+          spawnLand(player.x+PLAYER_W/2,p.y,col);
+          triggerShake(impact>0.55?Math.round(impact*5):0, impact*2);
+        }
+
         player.y=p.y-player.h;
         player.lastPlatId=p.id; player.lastPlatY=p.y;
         player.jumpCooldown=4; player.onGround=true;
-        coyoteFrames=0; squashTimer=SQUASH_DUR;
+        coyoteFrames=0;
+        squashTimer=Math.round(SQUASH_DUR*(0.5+impact*0.6));
         addCombo();
-        if(p.type==='crumble'&&p.crumbleState===0&&jetpackTimer===0){ p.crumbleState=1; p.crumbleTimer=26; }
+
+        if(p.type==='crumble'&&p.crumbleState===0&&jetpackTimer===0){
+          p.crumbleState=1; p.crumbleTimer=26;
+        }
         break;
       }
     }
@@ -1016,6 +1117,7 @@ function update(){
   platforms=platforms.filter(p=>p.crumbleState!==2);
   tickParticles(); tickFloaty(); updateBgP(ds);
 
+  // ── Fall off screen ───────────────────────────────────────────────────
   if(player.y>H+40){
     if(hasShield&&!shieldUsed){
       shieldUsed=true; hasShield=false;
@@ -1023,7 +1125,7 @@ function update(){
       triggerShake(8,3); powerupText.textContent='SHIELD USED';
       let top=platforms[0]; platforms.forEach(p=>{if(p.y<top.y)top=p;});
       player.y=top.y-PLAYER_H-10;
-      player.x=Math.max(0,Math.min(top.x+PLAT_W/2-PLAYER_W/2,W-PLAYER_W));
+      player.x=Math.max(0,Math.min(top.x+top.w/2-PLAYER_W/2,W-PLAYER_W));
       player.vy=JUMP_BASE; player.lastPlatId=null; player.lastPlatY=null;
       setTimeout(()=>{if(running)powerupText.textContent='';},1400);
     } else {
@@ -1032,10 +1134,21 @@ function update(){
     }
   }
 
+  // ── Animated score display ────────────────────────────────────────────
   if(!dying){
     const d=Math.floor(score/10);
-    hudScore.textContent=String(d);
-    scoreDisplay.innerHTML='Score <strong>'+d+'</strong>';
+    scoreAnim += (d - scoreAnim) * 0.15;
+    const shown = Math.round(scoreAnim);
+    hudScore.textContent=String(shown);
+    scoreDisplay.innerHTML='Score <strong>'+shown+'</strong>';
+
+    // live high-score flash
+    const best=getBest();
+    if(!highScoreBeaten && d>0 && d>=best && best>0){
+      highScoreBeaten=true;
+      floatyTexts.push({x:W/2,y:H/2-20,text:'NEW BEST!',color:'#ffe040',life:1.2,vy:-0.7,decay:0.014});
+      triggerShake(6,2);
+    }
   }
 }
 
@@ -1266,13 +1379,17 @@ function draw(){
   // platform helpers
   const movingFill  = lerpC('#778899', z>=4?'#cc7700':'#99aabb', t*0.5);
   const movingShine = lerpC('#aabbcc', z>=4?'#ffcc44':'#ccddee', t*0.5);
+  const bouncyFill  = z>=4?'#00ddaa':z===3?'#dd30cc':z===2?'#f0a030':z===1?'#80dd20':'#e8c020';
+  const bouncyShine = z>=4?'#80ffdd':z===3?'#ff80ee':z===2?'#ffc860':z===1?'#b0ff60':'#ffee60';
   const pFill=p=>{
     if(p.type==='moving')  return movingFill;
+    if(p.type==='bouncy')  return bouncyFill;
     if(p.type==='crumble') return lerpC('#a07050','#784030',Math.min(1-(p.crumbleTimer/26),1));
     return lerpC(ZA.pFill,ZB.pFill,t);
   };
   const pShine=p=>{
     if(p.type==='moving')  return movingShine;
+    if(p.type==='bouncy')  return bouncyShine;
     if(p.type==='crumble') return '#c09060';
     return lerpC(ZA.pShine,ZB.pShine,t);
   };
@@ -1312,6 +1429,16 @@ function draw(){
       ctx.strokeStyle=lerpC('#004433',ZONES[4].pShine,t);
       ctx.lineWidth=1.5; rr(p.x,p.y,p.w,p.h,3); ctx.stroke(); ctx.restore();
     }
+    // bouncy indicator — pulsing glow + chevron
+    if(p.type==='bouncy'){
+      ctx.save();
+      ctx.shadowColor=bouncyFill; ctx.shadowBlur=6+Math.sin(frame*0.15+p.id)*4;
+      ctx.strokeStyle=bouncyShine; ctx.lineWidth=1.5; ctx.lineCap='round';
+      rr(p.x,p.y,p.w,p.h,3); ctx.stroke();
+      const mx=p.x+p.w/2;
+      ctx.beginPath(); ctx.moveTo(mx-5,p.y+3); ctx.lineTo(mx,p.y+6); ctx.lineTo(mx+5,p.y+3); ctx.stroke();
+      ctx.restore();
+    }
     ctx.restore();
   });
 
@@ -1319,7 +1446,7 @@ function draw(){
 
   // powerups
   powerups.forEach(pu=>{
-    if(pu.type==='spring')  drawSpring(pu.x,pu.y);
+    if(pu.type==='spring')       drawSpring(pu.x,pu.y);
     else if(pu.type==='jetpack') drawJetpack(pu.x,pu.y);
     else if(pu.type==='shield')  drawShieldItem(pu.x,pu.y);
   });
@@ -1346,6 +1473,16 @@ function draw(){
     ctx.quadraticCurveTo(player.x+PLAYER_W/2,player.y+PLAYER_H+16+Math.random()*8,player.x+PLAYER_W-4,player.y+PLAYER_H);
     ctx.fill(); ctx.restore();
   }
+
+  // speed trail particles (rendered before rabbit, behind it)
+  ctx.save();
+  for(const p of particles){
+    if(p.type!=='trail') continue;
+    ctx.globalAlpha=Math.max(0,p.life)*0.35;
+    ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1; ctx.restore();
 
   // rabbit — dark in bright zones (Meadow/Sky), white in dark zones
   const rabbitIsLight = (z===0&&t<0.7)||(z===2&&t<0.7);
