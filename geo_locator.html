@@ -297,35 +297,54 @@
 </div>
 
 <script>
-const LOCATIONS = [
-  { lat: 48.8584,  lng:   2.2945, name: "Eiffel Tower, Paris, France"       },
-  { lat: 40.7580,  lng: -73.9855, name: "Times Square, New York, USA"        },
-  { lat: 35.6595,  lng: 139.7004, name: "Shibuya Crossing, Tokyo, Japan"     },
-  { lat: 51.5007,  lng:  -0.1246, name: "Westminster, London, UK"            },
-  { lat:-33.8568,  lng: 151.2153, name: "Sydney Opera House, Australia"      },
-  { lat: 41.9028,  lng:  12.4964, name: "Colosseum, Rome, Italy"             },
-  { lat: 37.9715,  lng:  23.7267, name: "Acropolis, Athens, Greece"          },
-  { lat: 27.1751,  lng:  78.0421, name: "Taj Mahal, Agra, India"             },
-  { lat:-22.9519,  lng: -43.2105, name: "Copacabana, Rio de Janeiro, Brazil" },
-  { lat: 55.7558,  lng:  37.6173, name: "Red Square, Moscow, Russia"         },
-  { lat: 30.0444,  lng:  31.2357, name: "Cairo, Egypt"                       },
-  { lat:  1.3521,  lng: 103.8198, name: "Gardens by the Bay, Singapore"      },
-  { lat:-13.1631,  lng: -72.5450, name: "Machu Picchu, Peru"                 },
-  { lat: 43.7230,  lng:  10.3966, name: "Leaning Tower of Pisa, Italy"       },
-  { lat: 48.2082,  lng:  16.3738, name: "Vienna Ringstrasse, Austria"        },
-  { lat:-33.9249,  lng:  18.4241, name: "Cape Town Waterfront, South Africa" },
-  { lat: 25.1972,  lng:  55.2744, name: "Burj Khalifa, Dubai, UAE"           },
-  { lat: 37.5665,  lng: 126.9780, name: "Gwanghwamun, Seoul, South Korea"    },
-  { lat: 19.4326,  lng: -99.1332, name: "Zocalo, Mexico City, Mexico"        },
-  { lat: 52.5200,  lng:  13.4050, name: "Brandenburg Gate, Berlin, Germany"  },
-  { lat: 59.9139,  lng:  10.7522, name: "Oslo City Hall, Norway"             },
-  { lat: 41.0082,  lng:  28.9784, name: "Grand Bazaar, Istanbul, Turkey"     },
-  { lat: 39.9042,  lng: 116.4074, name: "Tiananmen Square, Beijing, China"   },
-  { lat: 47.4979,  lng:  19.0402, name: "Fisherman's Bastion, Budapest"      },
-  { lat: 50.0755,  lng:  14.4378, name: "Old Town Square, Prague, Czechia"   },
+// Random worldwide Street View location finder
+// Biased toward populated land areas with good Street View coverage
+const STREET_VIEW_REGIONS = [
+  // Europe (high coverage)
+  { latMin:36, latMax:60, lngMin:-10, lngMax:30, weight:20 },
+  // North America
+  { latMin:25, latMax:55, lngMin:-130, lngMax:-60, weight:18 },
+  // Japan / South Korea
+  { latMin:30, latMax:45, lngMin:125, lngMax:145, weight:10 },
+  // Australia
+  { latMin:-38, latMax:-20, lngMin:140, lngMax:155, weight:8 },
+  // Brazil / South America
+  { latMin:-30, latMax:5, lngMin:-65, lngMax:-35, weight:8 },
+  // Southeast Asia
+  { latMin:0, latMax:25, lngMin:95, lngMax:130, weight:8 },
+  // India
+  { latMin:8, latMax:35, lngMin:68, lngMax:90, weight:7 },
+  // Middle East
+  { latMin:20, latMax:38, lngMin:35, lngMax:60, weight:5 },
+  // South Africa
+  { latMin:-35, latMax:-22, lngMin:16, lngMax:33, weight:5 },
+  // Russia
+  { latMin:50, latMax:65, lngMin:30, lngMax:80, weight:5 },
+  // Mexico / Central America
+  { latMin:15, latMax:25, lngMin:-110, lngMax:-85, weight:4 },
+  // New Zealand
+  { latMin:-47, latMax:-34, lngMin:165, lngMax:178, weight:2 },
 ];
 
+const TOTAL_WEIGHT = STREET_VIEW_REGIONS.reduce((s,r)=>s+r.weight,0);
 const TOTAL_ROUNDS = 5;
+
+function randomRegion() {
+  let r = Math.random() * TOTAL_WEIGHT, cumulative = 0;
+  for (const region of STREET_VIEW_REGIONS) {
+    cumulative += region.weight;
+    if (r <= cumulative) return region;
+  }
+  return STREET_VIEW_REGIONS[0];
+}
+
+function randomCandidate() {
+  const region = randomRegion();
+  return {
+    lat: region.latMin + Math.random() * (region.latMax - region.latMin),
+    lng: region.lngMin + Math.random() * (region.lngMax - region.lngMin),
+  };
+}
 window.state = state = { round:0, totalScore:0, roundData:[], usedIndices:[], guessMarker:null, guessLatLng:null, guessMap:null, streetview:null };
 
 function showScreen(id) {
@@ -353,9 +372,32 @@ function getRank(t) {
   if(t>=11000)return'Explorer'; if(t>=5000)return'Adventurer'; return'Novice';
 }
 function pickLocation() {
-  const av=LOCATIONS.map((_,i)=>i).filter(i=>!state.usedIndices.includes(i));
-  if(!av.length){state.usedIndices=[];return pickLocation();}
-  const i=av[Math.floor(Math.random()*av.length)]; state.usedIndices.push(i); return LOCATIONS[i];
+  // kept for compatibility — actual loading is async via findStreetViewLocation
+  return randomCandidate();
+}
+
+function findStreetViewLocation(attempt) {
+  attempt = attempt || 0;
+  if (attempt > 20) {
+    // fallback to a known good location
+    return Promise.resolve({ lat: 48.8584, lng: 2.2945, name: 'Paris, France' });
+  }
+  const candidate = randomCandidate();
+  return new Promise((resolve) => {
+    const svc = new google.maps.StreetViewService();
+    svc.getPanorama(
+      { location: { lat: candidate.lat, lng: candidate.lng }, radius: 5000, preference: google.maps.StreetViewPreference.NEAREST, source: google.maps.StreetViewSource.OUTDOOR },
+      (data, status) => {
+        if (status === google.maps.StreetViewStatus.OK) {
+          const pos = data.location.latLng;
+          const name = data.location.description || 'Unknown location';
+          resolve({ lat: pos.lat(), lng: pos.lng(), name: name, panoId: data.location.pano });
+        } else {
+          resolve(findStreetViewLocation(attempt + 1));
+        }
+      }
+    );
+  });
 }
 function buildPips() {
   const el=document.getElementById('bar-pips'); el.innerHTML='';
@@ -406,8 +448,7 @@ function placePin(latLng) {
   b.innerHTML='<span>Submit guess</span><span>↗</span>';
 }
 
-function loadRound() {
-  state.currentLocation=pickLocation();
+async function loadRound() {
   document.getElementById('bar-round-num').textContent=state.round+1;
   document.getElementById('sidebar-round').textContent=state.round+1;
   buildPips();
@@ -418,17 +459,18 @@ function loadRound() {
   const b=document.getElementById('btn-submit'); b.disabled=true;
   b.innerHTML='<span>Drop pin first</span><span></span>';
   document.getElementById('result-overlay').classList.remove('visible');
-  const svDiv=document.getElementById('streetview'); svDiv.innerHTML='';
-  const loc=state.currentLocation;
+  const svDiv=document.getElementById('streetview');
+  svDiv.innerHTML='<div class="loading-state"><div class="spinner"></div><span>Finding location…</span></div>';
+
+  const loc = await findStreetViewLocation();
+  state.currentLocation = loc;
+
+  svDiv.innerHTML='';
   state.streetview=new google.maps.StreetViewPanorama(svDiv,{
-    position:{lat:loc.lat,lng:loc.lng},pov:{heading:Math.random()*360,pitch:0},zoom:1,
+    pano: loc.panoId,
+    pov:{heading:Math.random()*360,pitch:0},zoom:1,
     disableDefaultUI:true,showRoadLabels:false,motionTracking:false,motionTrackingControl:false,
     addressControl:false,fullscreenControl:false,linksControl:false,panControl:false,zoomControl:true,enableCloseButton:false
-  });
-  const svc=new google.maps.StreetViewService();
-  svc.getPanorama({location:{lat:loc.lat,lng:loc.lng},radius:500},(data,status)=>{
-    if(status!==google.maps.StreetViewStatus.OK)
-      svDiv.innerHTML=`<div class="loading-state"><span>No street view here — guess anyway.</span></div>`;
   });
 }
 
