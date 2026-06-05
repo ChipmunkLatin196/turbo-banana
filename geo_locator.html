@@ -10,6 +10,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet" />
 
+  <!--
+    SETUP: Replace AIzaSyDI2JSbWOPvRczrdAKqdAsSYG45rKS_dEk below with your real key.
+    console.cloud.google.com → Enable Maps JavaScript API + Geometry library.
+    Restrict key to: sinstolmoi.com
+  -->
   <script>window.MAPS_API_KEY = 'AIzaSyDI2JSbWOPvRczrdAKqdAsSYG45rKS_dEk';</script>
 
   <style>
@@ -24,13 +29,13 @@
     }
     html, body { height: 100%; background: var(--bg); color: var(--black); font-family: var(--mono); font-size: 14px; -webkit-tap-highlight-color: transparent; overflow: hidden; }
 
-    .screen { display: none; }
-    .screen.active { display: block; }
-
-    #screen-start { overflow-y: auto; height: 100vh; }
+    .screen { display: none !important; }
+    #screen-start.active { display: flex !important; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; }
+    #screen-game.active { display: flex !important; flex-direction: column; height: 100vh; overflow: hidden; }
+    #screen-final.active { display: flex !important; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; }
 
     /* START */
-    #screen-start { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1.25rem; }
+    #screen-start { min-height: 100vh; padding: 2rem 1.25rem; }
     .start-wrap { width: 100%; max-width: 480px; border: 2px solid var(--black); box-shadow: 5px 5px 0 var(--black); }
     .start-header { padding: 1.5rem 1.25rem 1.25rem; border-bottom: 1.5px solid var(--black); }
     .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; letter-spacing: 0.08em; color: var(--muted); text-decoration: none; text-transform: uppercase; margin-bottom: 1.25rem; transition: color 0.12s; }
@@ -45,7 +50,6 @@
     .btn-start:hover { opacity: 0.85; }
 
     /* GAME */
-    #screen-game.active { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     .game-bar { display: flex; align-items: center; justify-content: space-between; padding: 0 1.25rem; height: 44px; border-bottom: 2px solid var(--black); background: var(--bg); flex-shrink: 0; gap: 1rem; }
     .bar-left { display: flex; align-items: center; gap: 1rem; }
     .bar-logo { font-family: var(--disp); font-size: 1.4rem; letter-spacing: 0.04em; line-height: 1; }
